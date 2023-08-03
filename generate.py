@@ -1,10 +1,11 @@
 
 import asyncio
 import openai
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import configparser
 import os
 import random
+import textwrap
 
 # 基本信息
 # 图片存放路径
@@ -13,6 +14,8 @@ PHOTO_ROOT = "./photo"
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
 COUNT_FILE = "./count.txt"
+
+TITLE_PIC_FILE = "./title.png"
 
 OUTPUT_ROOT = "./output"
 
@@ -72,6 +75,20 @@ def generate_9_pic(files):
     return result_image
 
 
+# 生成图片标题
+def add_pic_title(image):
+    width, height = image.size
+
+    title_img = Image.open(TITLE_PIC_FILE)
+    title_width, title_height = title_img.size
+
+    title_x, title_y = (width - title_width) // 2, (height - title_height) // 2
+
+    image.paste(title_img, (title_x, title_y), mask=title_img)
+
+    return image
+
+
 async def generate_completion(prompt):
     print("generating completion: %s" % prompt)
 
@@ -99,6 +116,7 @@ async def main(num):
         files = random.choices(files, k=9)
         files = [os.path.join(PHOTO_ROOT, file) for file in files]
         output_image = generate_9_pic(files)
+        output_image = add_pic_title(output_image)
 
         output_image_path = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
         output_image.save(output_image_path)
