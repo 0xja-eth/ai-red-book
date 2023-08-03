@@ -91,7 +91,7 @@ async def main(num):
     global count
 
     for i in range(0, num):
-        count = count + 1
+        count += 1
 
         openai.api_key = config.get('API', 'openai_key')
 
