@@ -35,8 +35,8 @@ def get_content(idx):
         return file.read()
 
 
-def get_pic_path(idx):
-    return os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx)
+def get_pic_abspath(idx):
+    return os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
 
 
 async def login():
@@ -71,10 +71,16 @@ async def publish():
     publish.click()
     time.sleep(3)
 
+    upload_i_path0 = '//*[@id="publisher-dom"]/div/div[1]/div/div[1]/div[1]/div[2]'
+    upload_wait = wait.until(EC.element_to_be_clickable((By.XPATH, upload_i_path0)))
+    upload_i = driver.find_element(By.XPATH, upload_i_path0)
+    upload_i.click()
+    time.sleep(3)
+
     # 输入按钮
     upload_all = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    upload_all.send_keys(get_pic_path(count))
+    upload_all.send_keys(get_pic_abspath(count))
     # upload_all.send_keys(base_photo1)
     time.sleep(15)
     print("已经上传图片")
