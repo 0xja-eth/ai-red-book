@@ -23,19 +23,19 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 
-def get_title(idx=count):
+def get_title(idx):
     file_name = os.path.join(OUTPUT_ROOT, "%d-title.txt" % idx)
     with open(file_name, encoding="utf8") as file:
         return file.read()
 
 
-def get_content(idx=count):
+def get_content(idx):
     file_name = os.path.join(OUTPUT_ROOT, "%d-content.txt" % idx)
     with open(file_name, encoding="utf8") as file:
         return file.read()
 
 
-def get_pic_path(idx=count):
+def get_pic_path(idx):
     return os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx)
 
 
@@ -74,7 +74,7 @@ async def publish():
     # 输入按钮
     upload_all = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    upload_all.send_keys(get_pic_path())
+    upload_all.send_keys(get_pic_path(count))
     # upload_all.send_keys(base_photo1)
     time.sleep(15)
     print("已经上传图片")
@@ -82,13 +82,13 @@ async def publish():
     # 填写标题
     title_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[2]/input'
     title = driver.find_element(By.XPATH, title_path)
-    title_content = get_title()
+    title_content = get_title(count)
     title.send_keys(title_content)
     time.sleep(3)
 
     # 填写内容信息
     content_path = '//*[@id="post-textarea"]'
-    description = get_content()
+    description = get_content(count)
     content = driver.find_element(By.XPATH, content_path)
     content.send_keys(description)
     time.sleep(3)
