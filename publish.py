@@ -5,14 +5,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import schedule
 import os
 import configparser
 
-COUNT_FILE = "./pub_count.txt"
+COUNT_FILE = "./count.txt"
+PUB_COUNT_FILE = "./pub_count.txt"
 
 OUTPUT_ROOT = "./output"
 
 with open(COUNT_FILE, encoding="utf8") as c_file:
+    max_count = int(c_file.read())
+
+with open(PUB_COUNT_FILE, encoding="utf8") as c_file:
     count = int(c_file.read())
 
 driver = webdriver.Chrome()
@@ -60,7 +65,9 @@ async def login():
 async def publish():
     global count
 
-    count += 1
+    count = count % max_count + 1
+
+    print("Start publish: %d" % count)
 
     # 确定为已登陆状态
     # 首先先找到发布笔记，然后点击
@@ -106,15 +113,22 @@ async def publish():
     p = driver.find_element(By.XPATH, p_path)
     p.click()
 
-    time.sleep(10)
-
-    with open(COUNT_FILE, "w", encoding="utf8") as file:
+    with open(PUB_COUNT_FILE, "w", encoding="utf8") as file:
         file.write(str(count))
+
+    print("End published")
+
+    time.sleep(3)
+
+    driver.refresh()
 
 
 async def main():
     await login()
-    await publish()
+
+    while True:
+        await publish()
+        time.sleep(10)
 
 
 if __name__ == '__main__':

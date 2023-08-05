@@ -92,13 +92,28 @@ def add_pic_title(image):
 async def generate_completion(prompt):
     print("generating completion: %s" % prompt)
 
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=prompt,
-        max_tokens=2048,
+    response = openai.ChatCompletion.create(
+      model="gpt-3.5-turbo-16k",
+      messages=[
+        {
+          "role": "system",
+          "content": prompt  # "%s 用中文回答" % prompt
+        }
+      ],
+      temperature=1,
+      max_tokens=4096,
+      top_p=1,
+      frequency_penalty=0,
+      presence_penalty=0
     )
 
-    message = response.choices[0].text.replace(" ", "").strip()
+    # response = openai.Completion.create(
+    #     model="text-davinci-003-",
+    #     prompt=prompt,
+    #     max_tokens=2048,
+    # )
+
+    message = response.choices[0].message.content.strip()
     print("generated completion: %s" % message)
 
     return message
