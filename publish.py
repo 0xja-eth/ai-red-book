@@ -92,18 +92,27 @@ async def publish():
     time.sleep(15)
     print("已经上传图片")
 
+    JS_CODE_ADD_TEXT = """
+      console.log("arguments", arguments)
+      var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+      elm[key] += txt;
+      elm.dispatchEvent(new Event('change'));
+    """
+
     # 填写标题
     title_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[2]/input'
-    title = driver.find_element(By.XPATH, title_path)
-    title_content = get_title(count)
-    title.send_keys(title_content)
+    title_elm = driver.find_element(By.XPATH, title_path)
+    title_text = get_title(count)
+    driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
+    # title.send_keys(title_content)
     time.sleep(3)
 
     # 填写内容信息
     content_path = '//*[@id="post-textarea"]'
-    description = get_content(count)
-    content = driver.find_element(By.XPATH, content_path)
-    content.send_keys(description)
+    content_elm = driver.find_element(By.XPATH, content_path)
+    content_text = get_content(count)
+    driver.execute_script(JS_CODE_ADD_TEXT, content_elm, content_text, "textContent")
+    # content.send_keys(description)
     time.sleep(3)
 
     # 发布内容

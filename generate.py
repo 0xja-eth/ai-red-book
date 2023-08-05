@@ -125,7 +125,7 @@ async def main(num):
     for i in range(0, num):
         count += 1
 
-        openai.api_key = config.get('API', 'openai_key')
+        openai.api_key = config.get('Generate', 'openai_key')
 
         files = os.listdir(PHOTO_ROOT)
         files = random.choices(files, k=9)
