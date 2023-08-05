@@ -111,7 +111,8 @@ async def publish():
     content_path = '//*[@id="post-textarea"]'
     content_elm = driver.find_element(By.XPATH, content_path)
     content_text = get_content(count)
-    driver.execute_script(JS_CODE_ADD_TEXT, content_elm, content_text, "textContent")
+    driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
+                          content_text.replace("\n", "<br/>"), "innerHTML")
     # content.send_keys(description)
     time.sleep(3)
 
