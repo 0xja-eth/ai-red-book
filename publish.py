@@ -5,7 +5,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import schedule
 import os
 import configparser
 
@@ -44,7 +43,7 @@ def get_pic_abspath(idx):
     return os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
 
 
-async def login():
+def login():
     driver.get("https://creator.xiaohongshu.com/publish/publish?source=official")
     # 登录之后采用如下代码输出cookie
     # for cookie in manual_cookies:
@@ -62,12 +61,12 @@ async def login():
     elem.click()
 
 
-async def publish():
+def publish():
     global count
 
     count = count % max_count + 1
 
-    print("Start publish: %d" % count)
+    print("Start publish: %d / %d" % (count, max_count))
 
     # 确定为已登陆状态
     # 首先先找到发布笔记，然后点击
@@ -126,22 +125,24 @@ async def publish():
     with open(PUB_COUNT_FILE, "w", encoding="utf8") as file:
         file.write(str(count))
 
-    print("End published")
+    print("End publish: %s: %s" % (title_text, content_text))
 
     time.sleep(3)
 
     driver.refresh()
 
 
-async def main():
-    await login()
+def main():
+    login()
 
     while True:
-        await publish()
-        time.sleep(10)
+        publish()
+        time.sleep(interval)
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    interval = int(config.get('Publish', 'interval'))
+
+    main()
 
 

@@ -1,11 +1,11 @@
 
-import asyncio
-import openai
-from PIL import Image, ImageDraw, ImageFont
+import time
+from PIL import Image
 import configparser
 import os
 import random
-import textwrap
+import requests
+import json
 
 # 基本信息
 # 图片存放路径
@@ -89,76 +89,63 @@ def add_pic_title(image):
     return image
 
 
-async def generate_completion(prompt):
-    print("generating completion: %s" % prompt)
-
-    response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo-16k",
-      messages=[
-        {
-          "role": "system",
-          "content": prompt  # "%s 用中文回答" % prompt
-        }
-      ],
-      temperature=1,
-      max_tokens=4096,
-      top_p=1,
-      frequency_penalty=0,
-      presence_penalty=0
-    )
-
-    # response = openai.Completion.create(
-    #     model="text-davinci-003-",
-    #     prompt=prompt,
-    #     max_tokens=2048,
-    # )
-
-    message = response.choices[0].message.content.strip()
-    print("generated completion: %s" % message)
-
-    return message
-
-
-async def main(num):
+def generate():
     global count
 
-    for i in range(0, num):
-        count += 1
+    count += 1
 
-        openai.api_key = config.get('Generate', 'openai_key')
+    print("Start generate: %d" % count)
 
-        files = os.listdir(PHOTO_ROOT)
-        files = random.choices(files, k=9)
-        files = [os.path.join(PHOTO_ROOT, file) for file in files]
-        output_image = generate_9_pic(files)
-        output_image = add_pic_title(output_image)
+    files = os.listdir(PHOTO_ROOT)
+    files = random.choices(files, k=9)
+    files = [os.path.join(PHOTO_ROOT, file) for file in files]
+    output_image = generate_9_pic(files)
+    output_image = add_pic_title(output_image)
 
-        output_image_path = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
-        output_image.save(output_image_path)
+    output_image_path = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
+    output_image.save(output_image_path)
 
-        with open(TITLE_PROMPT_FILE, encoding="utf8") as file:
-            prompt = file.read()
+    with open(TITLE_PROMPT_FILE, encoding="utf8") as file:
+        title_prompt = file.read()
 
-        output_title = await generate_completion(prompt)
-        output_title_path = os.path.join(OUTPUT_ROOT, "%d-title.txt" % count)
+    with open(CONTENT_PROMPT_FILE, encoding="utf8") as file:
+        content_prompt = file.read()
 
-        with open(output_title_path, "w", encoding="utf8") as file:
-            file.write(output_title)
+    url = "%s/generate" % host
+    headers = {'Content-Type': 'application/json'}
+    data = {'api_key': api_key, 'title_prompt': title_prompt, 'content_prompt': content_prompt}
 
-        with open(CONTENT_PROMPT_FILE, encoding="utf8") as file:
-            prompt = file.read()
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    res_json = response.json()
 
-        output_content = await generate_completion(prompt % output_title)
-        output_content_path = os.path.join(OUTPUT_ROOT, "%d-content.txt" % count)
+    output_title = res_json["title"]
+    output_content = res_json["content"]
 
-        with open(output_content_path, "w", encoding="utf8") as file:
-            file.write(output_content)
+    output_title_path = os.path.join(OUTPUT_ROOT, "%d-title.txt" % count)
+    with open(output_title_path, "w", encoding="utf8") as file:
+        file.write(output_title)
 
-        with open(COUNT_FILE, "w", encoding="utf8") as file:
-            file.write(str(count))
+    output_content_path = os.path.join(OUTPUT_ROOT, "%d-content.txt" % count)
+    with open(output_content_path, "w", encoding="utf8") as file:
+        file.write(output_content)
+
+    with open(COUNT_FILE, "w", encoding="utf8") as file:
+        file.write(str(count))
+
+    print("End generate: %s: %s" % (output_title, output_content))
+
+
+def main():
+    while count < max_count:
+        generate()
+        time.sleep(interval)
 
 
 if __name__ == '__main__':
-    asyncio.run(main(1))
+    host = config.get('Generate', 'host')
+    api_key = config.get('Generate', 'openai_key')
+    interval = int(config.get('Generate', 'interval'))
+    max_count = int(config.get('Generate', 'max_count'))
 
+    main()
 
