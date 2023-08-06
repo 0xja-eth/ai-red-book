@@ -88,7 +88,15 @@ def publish():
 
     upload_all.send_keys(get_pic_abspath(count))
     # upload_all.send_keys(base_photo1)
-    time.sleep(15)
+    # 判断图片上传成功
+    while True:
+        time.sleep(2)
+        try:
+            uploading = 'mask.uploading'
+            driver.find_element(By.CLASS_NAME, uploading)
+            print("图片正在上传中……")
+        except Exception as e:
+            break
     print("已经上传图片")
 
     JS_CODE_ADD_TEXT = """
