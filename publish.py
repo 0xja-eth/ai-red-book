@@ -1,4 +1,3 @@
-
 import asyncio
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -40,7 +39,9 @@ def get_content(idx):
 
 
 def get_pic_abspath(idx):
-    return os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
+    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
+    if os.path.exists(file_name): return file_name
+    raise Exception("File not exist: %s" % file_name)
 
 
 def login():
@@ -136,13 +137,15 @@ def main():
     login()
 
     while True:
-        publish()
-        time.sleep(interval)
+        try:
+            publish()
+            time.sleep(interval)
+        except Exception as e:
+            print("Error publish: %s" % str(e))
+            driver.refresh()
 
 
 if __name__ == '__main__':
     interval = int(config.get('Publish', 'interval'))
 
     main()
-
-
