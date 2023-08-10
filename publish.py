@@ -143,9 +143,11 @@ def main():
         except Exception as e:
             print("Error publish: %s" % str(e))
             driver.refresh()
+        if count >= max_count and not is_loop: break
 
 
 if __name__ == '__main__':
     interval = int(config.get('Publish', 'interval'))
+    is_loop = config.get('Publish', 'is_loop').lower() == "true"
 
     main()

@@ -9,7 +9,7 @@ import json
 
 # 基本信息
 # 图片存放路径
-PHOTO_ROOT = "./photo"
+PICTURE_ROOT = "./picture"
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
@@ -96,9 +96,9 @@ def generate():
 
     print("Start generate: %d" % count)
 
-    files = os.listdir(PHOTO_ROOT)
+    files = os.listdir(PICTURE_ROOT)
     files = random.choices(files, k=9)
-    files = [os.path.join(PHOTO_ROOT, file) for file in files]
+    files = [os.path.join(PICTURE_ROOT, file) for file in files]
     output_image = generate_9_pic(files)
     output_image = add_pic_title(output_image)
 
