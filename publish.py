@@ -136,10 +136,6 @@ def publish():
 
     print("End publish: %s: %s" % (title_text, content_text))
 
-    time.sleep(3)
-
-    driver.refresh()
-
 
 def main():
     login()
@@ -150,7 +146,8 @@ def main():
             time.sleep(interval)
         except Exception as e:
             print("Error publish: %s" % str(e))
-            driver.refresh()
+
+        driver.refresh()
         if count >= max_count and not is_looped: break
 
 
