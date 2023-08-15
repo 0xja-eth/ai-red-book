@@ -1,8 +1,14 @@
 import asyncio
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import WebDriverException
+
+import shutil
+
 import time
 import os
 import configparser
@@ -18,8 +24,8 @@ with open(COUNT_FILE, encoding="utf8") as c_file:
 with open(PUB_COUNT_FILE, encoding="utf8") as c_file:
     count = int(c_file.read())
 
-driver = webdriver.Chrome()
-wait = WebDriverWait(driver, 120)
+driver = None
+wait = None
 
 # 读取配置文件
 config = configparser.ConfigParser()
@@ -42,6 +48,25 @@ def get_pic_abspath(idx):
     file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
     if os.path.exists(file_name): return file_name
     raise Exception("File not exist: %s" % file_name)
+
+
+def download_driver():
+    chromedriver_path = ChromeDriverManager().install()
+
+    # 将chromedriver移动到当前目录
+    new_chromedriver_path = os.path.join(".", "chromedriver.exe")
+    shutil.copy(chromedriver_path, new_chromedriver_path)
+
+
+def init_driver():
+    global driver, wait
+
+    if not os.path.exists("./chromedriver.exe"):
+        download_driver()
+
+    chromedriver_path = Service("./chromedriver.exe")
+    driver = webdriver.Chrome(service=chromedriver_path)
+    wait = WebDriverWait(driver, 120)
 
 
 def login():
@@ -138,6 +163,7 @@ def publish():
 
 
 def main():
+    init_driver()
     login()
 
     while True:
