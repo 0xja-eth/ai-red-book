@@ -10,7 +10,7 @@ import shutil
 
 # 基本信息
 # 图片存放路径
-PICTURE_ROOT = "./picture"
+VIDEO_ROOT = "./video"
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
@@ -97,20 +97,11 @@ def generate():
 
     print("Start generate: %d" % count)
 
-    files = os.listdir(PICTURE_ROOT)
+    files = os.listdir(VIDEO_ROOT)
+    file = os.path.join(VIDEO_ROOT, random.choice(files))
+    output_file = os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % count)
 
-    output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
-
-    if use_9_pic:
-        files = random.sample(files, k=9)
-        files = [os.path.join(PICTURE_ROOT, file) for file in files]
-        output_image = generate_9_pic(files)
-        output_image = add_pic_title(output_image)
-        output_image.save(output_file)
-
-    else:
-        file = os.path.join(PICTURE_ROOT, random.choice(files))
-        shutil.copy(file, output_file)
+    shutil.copy(file, output_file)
 
     with open(TITLE_PROMPT_FILE, encoding="utf8") as file:
         title_prompt = file.read()
@@ -153,7 +144,6 @@ if __name__ == '__main__':
     api_key = config.get('Generate', 'openai_key')
     interval = int(config.get('Generate', 'interval'))
     max_count = int(config.get('Generate', 'max_count'))
-    use_9_pic = config.get('Generate', 'use_9_pic').lower() == "true"
 
     main()
 
