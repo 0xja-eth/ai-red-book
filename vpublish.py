@@ -132,14 +132,15 @@ def publish():
 
     # 上传标题
     title_path = "c-input_inner"
-    title = driver.find_element(By.CLASS_NAME, title_path)
-    driver.execute_script(JS_CODE_ADD_TEXT, title, title_text)
+    title_elm = driver.find_element(By.CLASS_NAME, title_path)
+    driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
     time.sleep(3)
 
     # 上传内容
     content_path = "post-content"
-    content = driver.find_element(By.CLASS_NAME, content_path)
-    driver.execute_script(JS_CODE_ADD_TEXT, content, content_text)
+    content_elm = driver.find_element(By.CLASS_NAME, content_path)
+    driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
+                          content_text.replace("\n", "<br/>"), "innerHTML")
     time.sleep(3)
 
     # 上传
