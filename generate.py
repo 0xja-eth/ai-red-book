@@ -76,6 +76,27 @@ def generate_9_pic(files):
     return result_image
 
 
+# 生成四宫格
+def generate_4_pic(files):
+    images = [Image.open(file) for file in files]
+
+    # 获取图片的宽高（第一张图为准）
+    image_width, image_height = images[0].size
+
+    # 创建新图片，尺寸为3倍的宽度和高度
+    result_width = image_width * 2
+    result_height = image_height * 2
+    result_image = Image.new('RGB', (result_width, result_height))
+
+    # 将九张图片按照九宫格排列拼接到新图片上
+    for i in range(2):
+        for j in range(2):
+            resized_image = resize_image(images[i * 2 + j], image_width, image_height)
+            result_image.paste(resized_image, (j * image_width, i * image_height))
+
+    return result_image
+
+
 # 生成图片标题
 def add_pic_title(image):
     width, height = image.size
@@ -101,16 +122,33 @@ def generate():
 
     output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
 
-    if use_9_pic:
+    if pic_mode == "9_pic":
         files = random.sample(files, k=9)
         files = [os.path.join(PICTURE_ROOT, file) for file in files]
         output_image = generate_9_pic(files)
-        output_image = add_pic_title(output_image)
+
+        if use_title: output_image = add_pic_title(output_image)
+
         output_image.save(output_file)
 
-    else:
+    elif pic_mode == "4_pic":
+        files = random.sample(files, k=4)
+        files = [os.path.join(PICTURE_ROOT, file) for file in files]
+        output_image = generate_4_pic(files)
+
+        if use_title: output_image = add_pic_title(output_image)
+
+        output_image.save(output_file)
+
+    elif pic_mode == "single":
         file = os.path.join(PICTURE_ROOT, random.choice(files))
-        shutil.copy(file, output_file)
+
+        if use_title:
+            output_image = Image.open(file)
+            output_image = add_pic_title(output_image)
+            output_image.save(output_file)
+        else:
+            shutil.copy(file, output_file)
 
     with open(TITLE_PROMPT_FILE, encoding="utf8") as file:
         title_prompt = file.read()
@@ -153,7 +191,8 @@ if __name__ == '__main__':
     api_key = config.get('Generate', 'openai_key')
     interval = int(config.get('Generate', 'interval'))
     max_count = int(config.get('Generate', 'max_count'))
-    use_9_pic = config.get('Generate', 'use_9_pic').lower() == "true"
+    pic_mode = config.get('Generate', 'pic_mode').lower()
+    use_title = config.get('Generate', 'use_title').lower() == "true"
 
     main()
 
