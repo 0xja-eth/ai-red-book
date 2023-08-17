@@ -14,11 +14,11 @@ VIDEO_ROOT = "./video"
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
-COUNT_FILE = "./count.txt"
+COUNT_FILE = "./vcount.txt"
 
 TITLE_PIC_FILE = "./title.png"
 
-OUTPUT_ROOT = "./output"
+OUTPUT_ROOT = "./voutput"
 
 # 读取配置文件
 config = configparser.ConfigParser()

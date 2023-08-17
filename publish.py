@@ -123,6 +123,9 @@ def publish():
             break
     print("已经上传图片")
 
+    title_text = get_title(count)
+    content_text = get_content(count)
+
     JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
       var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
@@ -133,7 +136,6 @@ def publish():
     # 填写标题
     title_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[2]/input'
     title_elm = driver.find_element(By.XPATH, title_path)
-    title_text = get_title(count)
     driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
     # title.send_keys(title_content)
     time.sleep(3)
@@ -141,7 +143,6 @@ def publish():
     # 填写内容信息
     content_path = '//*[@id="post-textarea"]'
     content_elm = driver.find_element(By.XPATH, content_path)
-    content_text = get_content(count)
     driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
                           content_text.replace("\n", "<br/>"), "innerHTML")
     # content.send_keys(description)

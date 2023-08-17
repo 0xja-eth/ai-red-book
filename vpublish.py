@@ -10,12 +10,10 @@ import shutil
 import os
 import configparser
 
-VIDEO_ROOT = "./video"
-
 VIDEO_COUNT_FILE = "./vcount.txt"
 PUB_VIDEO_COUNT_FILE = "./vpub_count.txt"
 
-OUTPUT_ROOT = "./output"
+OUTPUT_ROOT = "./voutput"
 
 with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
     max_count = int(vc_file.read())
@@ -45,7 +43,7 @@ def get_content(idx):
 
 # 获取视频文件路径
 def get_vi_abspath(idx):
-    file_name = os.path.abspath(os.path.join(VIDEO_ROOT, "%d-vi.mp4" % idx))
+    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % idx))
     if os.path.exists(file_name):
         return file_name
     raise Exception("File not exist: %s" % file_name)
@@ -108,7 +106,7 @@ def publish():
 
     upload_video = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    upload_video.send_keys(get_vi_abspath(0))
+    upload_video.send_keys(get_vi_abspath(count))
 
     # 等待视频上传完成
     while True:
@@ -122,8 +120,8 @@ def publish():
     print("视频已上传完成！")
 
     # 需要再修改
-    title_text = "测试"
-    content_text = "测试1111"
+    title_text = get_title(count)
+    content_text = get_content(count)
 
     JS_CODE_ADD_TEXT = """
          console.log("arguments", arguments)
