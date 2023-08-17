@@ -97,7 +97,7 @@ def generate():
     print("Start generate: %d" % count)
 
     files = os.listdir(PICTURE_ROOT)
-    files = random.choices(files, k=9)
+    files = random.sample(files, k=9)
     files = [os.path.join(PICTURE_ROOT, file) for file in files]
     output_image = generate_9_pic(files)
     output_image = add_pic_title(output_image)

@@ -1,3 +1,4 @@
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -6,21 +7,21 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 import shutil
-
-import time
 import os
 import configparser
 
-COUNT_FILE = "./count.txt"
-PUB_COUNT_FILE = "./pub_count.txt"
+VIDEO_ROOT = "./video"
+
+VIDEO_COUNT_FILE = "./vcount.txt"
+PUB_VIDEO_COUNT_FILE = "./vpub_count.txt"
 
 OUTPUT_ROOT = "./output"
 
-with open(COUNT_FILE, encoding="utf8") as c_file:
-    max_count = int(c_file.read())
+with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
+    max_count = int(vc_file.read())
 
-with open(PUB_COUNT_FILE, encoding="utf8") as c_file:
-    count = int(c_file.read())
+with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
+    count = int(vc_file.read())
 
 driver: webdriver.Chrome
 wait: WebDriverWait
@@ -42,9 +43,11 @@ def get_content(idx):
         return file.read()
 
 
-def get_pic_abspath(idx):
-    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
-    if os.path.exists(file_name): return file_name
+# 获取视频文件路径
+def get_vi_abspath(idx):
+    file_name = os.path.abspath(os.path.join(VIDEO_ROOT, "%d-vi.mp4" % idx))
+    if os.path.exists(file_name):
+        return file_name
     raise Exception("File not exist: %s" % file_name)
 
 
@@ -56,6 +59,7 @@ def download_driver():
     shutil.copy(chromedriver_path, new_chromedriver_path)
 
 
+# 初始化浏览器驱动
 def init_driver():
     global driver, wait
 
@@ -85,15 +89,16 @@ def login():
     elem.click()
 
 
+# 发布视频
 def publish():
     global count
 
     count = count % max_count + 1
 
-    print("Start publish: %d / %d" % (count, max_count))
+    print("Start publish video: %d / %d" % (count, max_count))
 
-    # 确定为已登陆状态
-    # 首先先找到发布笔记，然后点击
+    # 确定为已登录状态
+    # 首先找到发布笔记，然后点击
     publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
     # 等待按钮找到
     publish_wait = wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
@@ -101,60 +106,51 @@ def publish():
     publish.click()
     time.sleep(3)
 
-    upload_i_path0 = '//*[@id="publisher-dom"]/div/div[1]/div/div[1]/div[1]/div[2]'
-    upload_wait = wait.until(EC.element_to_be_clickable((By.XPATH, upload_i_path0)))
-    upload_i = driver.find_element(By.XPATH, upload_i_path0)
-    upload_i.click()
-    time.sleep(3)
+    upload_video = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    # 输入按钮
-    upload_all = driver.find_element(By.CLASS_NAME, "upload-input")
+    upload_video.send_keys(get_vi_abspath(0))
 
-    upload_all.send_keys(get_pic_abspath(count))
-    # upload_all.send_keys(base_photo1)
-    # 判断图片上传成功
+    # 等待视频上传完成
     while True:
-        time.sleep(2)
+        time.sleep(3)
         try:
-            uploading = 'mask.uploading'
-            driver.find_element(By.CLASS_NAME, uploading)
-            print("图片正在上传中……")
-        except Exception as e:
+            driver.find_element(By.CLASS_NAME, "reUpload")
             break
-    print("已经上传图片")
+        except Exception as e:
+            print("视频还在上传中···")
+
+    print("视频已上传完成！")
+
+    # 需要再修改
+    title_text = "测试"
+    content_text = "测试1111"
 
     JS_CODE_ADD_TEXT = """
-      console.log("arguments", arguments)
-      var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
-      elm[key] += txt;
-      elm.dispatchEvent(new Event('change'));
-    """
+         console.log("arguments", arguments)
+         var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+         elm[key] += txt;
+         elm.dispatchEvent(new Event('change'));
+       """
 
-    # 填写标题
-    title_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[2]/input'
-    title_elm = driver.find_element(By.XPATH, title_path)
-    title_text = get_title(count)
-    driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
-    # title.send_keys(title_content)
+    # 上传标题
+    title_path = "c-input_inner"
+    title = driver.find_element(By.CLASS_NAME, title_path)
+    driver.execute_script(JS_CODE_ADD_TEXT, title, title_text)
     time.sleep(3)
 
-    # 填写内容信息
-    content_path = '//*[@id="post-textarea"]'
-    content_elm = driver.find_element(By.XPATH, content_path)
-    content_text = get_content(count)
-    driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
-                          content_text.replace("\n", "<br/>"), "innerHTML")
-    # content.send_keys(description)
+    # 上传内容
+    content_path = "post-content"
+    content = driver.find_element(By.CLASS_NAME, content_path)
+    driver.execute_script(JS_CODE_ADD_TEXT, content, content_text)
     time.sleep(3)
 
-    # 发布内容
-    p_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[7]/button[1]'
-    pp_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[7]/button[1]'
-    # p_wait = wait.until(EC.element_to_be_clickable(By.XPATH, p_path))
-    p = driver.find_element(By.XPATH, p_path)
+    # 上传
+    p_path = 'css-k3hpu2.css-osq2ks.dyn.publishBtn.red'
+    p_wait = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, p_path)))
+    p = driver.find_element(By.CLASS_NAME, p_path)
     p.click()
 
-    with open(PUB_COUNT_FILE, "w", encoding="utf8") as file:
+    with open(PUB_VIDEO_COUNT_FILE, "w", encoding="utf8") as file:
         file.write(str(count))
 
     print("End publish: %s: %s" % (title_text, content_text))
@@ -176,7 +172,7 @@ def main():
 
 
 if __name__ == '__main__':
-    interval = int(config.get('Publish', 'interval'))
-    is_looped = config.get('Publish', 'is_looped').lower() == "true"
+    interval = int(config.get('VPublish', 'interval'))
+    is_looped = config.get('VPublish', 'is_looped').lower() == "true"
 
     main()
