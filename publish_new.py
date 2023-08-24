@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.keys import Keys
 
 import shutil
 
@@ -156,9 +157,18 @@ def publish():
     time.sleep(3)
 
     # 填写内容信息
+    # TODO 内容信息话题部分
+    test_text = "为什么我这么穷"
+    topic_path = 'topicBtn'
+    topic_elm = driver.find_element(By.ID, topic_path)
+    topic_elm.click()
+
     content_path = '//*[@id="post-textarea"]'
     content_elm = driver.find_element(By.XPATH, content_path)
     content_text = get_content(count)
+    content_elm.send_keys(test_text)
+    time.sleep(3)
+    content_elm.send_keys(Keys.ENTER)
     driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
                           content_text.replace("\n", "<br/>"), "innerHTML")
     # content.send_keys(description)
@@ -256,6 +266,9 @@ def publishVideo():
         file.write(str(v_count))
 
     print("End publish: %s: %s" % (title_text, content_text))
+
+
+
 
 def main():
     init_driver()
