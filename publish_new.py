@@ -195,7 +195,7 @@ def publishVideo():
 
     upload_video = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    upload_video.send_keys(get_vi_abspath(0))
+    upload_video.send_keys(get_vi_abspath(v_count))
 
     # 等待视频上传完成
     while True:
