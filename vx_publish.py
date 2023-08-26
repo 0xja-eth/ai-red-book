@@ -152,7 +152,7 @@ def publish():
     while True:
         time.sleep(3)
         try:
-            driver.find_element(By.XPATH, "ant-progress-inner")
+            driver.find_element(By.CLASS_NAME, "ant-progress-inner")
             print("视频还在上传中……")
         except Exception as e:
             break
@@ -161,12 +161,12 @@ def publish():
 
 
     # TODO 需要具体内容
-    title = "测试"
+    title = "测试测试测试测试"
     content = "测试1111"
 
     JS_CODE_ADD_TEXT = """
             console.log("arguments", arguments)
-            var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+            var elm = arguments[0], txt = arguments[1], key = arguments[2] || "textContent";
             elm[key] += txt;
             elm.dispatchEvent(new Event('change'));
           """
@@ -181,7 +181,10 @@ def publish():
     title_path = "weui-desktop-form__input"
     title_publish = driver.find_element(By.CLASS_NAME, title_path)
 
-    driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title)
+    driver.execute_script(JS_VIDSABLE, title_publish)
+    time.sleep(1)
+    title_publish.send_keys(title)
+    # driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title)
     time.sleep(3)
 
 
