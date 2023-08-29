@@ -98,7 +98,7 @@ def generate():
     print("Start generate: %d" % count)
 
     files = os.listdir(VIDEO_ROOT)
-    file = os.path.join(VIDEO_ROOT, random.choice(files))
+    file = os.path.join(VIDEO_ROOT, files[(count - 1) % len(files)])
     output_file = os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % count)
 
     shutil.copy(file, output_file)

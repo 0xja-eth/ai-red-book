@@ -167,6 +167,7 @@ def publish():
     content_elm = driver.find_element(By.XPATH, content_path)
     content_text = get_content(count)
     content_elm.send_keys(test_text)
+
     time.sleep(3)
     content_elm.send_keys(Keys.ENTER)
     driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
@@ -268,35 +269,25 @@ def publishVideo():
     print("End publish: %s: %s" % (title_text, content_text))
 
 
-
-
 def main():
     init_driver()
     login()
 
-    if is_video:
-        while True:
-            try:
-                publish()
-                time.sleep(interval)
-            except Exception as e:
-                print("Error publish: %s" % str(e))
+    while True:
+        try:
+            publish()
+            time.sleep(interval)
+        except Exception as e:
+            print("Error publish: %s" % str(e))
 
-            driver.refresh()
-            if count >= max_count and not is_looped: break
-    else:
-        while True:
-            try:
-                publishVideo()
-                time.sleep(v_interval)
-            except Exception as e:
-                print("Error publish video: %s" % str(e))
+        driver.refresh()
+        if count >= max_count and not is_looped: break
 
 
 if __name__ == '__main__':
     interval = int(config.get('Publish', 'interval'))
     is_looped = config.get('Publish', 'is_looped').lower() == "true"
-    v_interval = int(config.get('Publish', 'v_interval'))
-    is_video = config.get('Publish', 'is_video').lower() == "false"
+    # v_interval = int(config.get('Publish', 'v_interval'))
+    # is_video = config.get('Publish', 'is_video').lower() == "false"
 
     main()

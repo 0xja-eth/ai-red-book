@@ -4,12 +4,14 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
 
 import shutil
 
 import time
 import os
 import configparser
+import re
 
 COUNT_FILE = "./count.txt"
 PUB_COUNT_FILE = "./pub_count.txt"
@@ -42,10 +44,28 @@ def get_content(idx):
         return file.read()
 
 
-def get_pic_abspath(idx):
-    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
+def get_pic_abspath(idx, order=0):
+    if order == 0:
+        file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
+        if os.path.exists(file_name): return file_name
+
+    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (idx, order)))
     if os.path.exists(file_name): return file_name
+
     raise Exception("File not exist: %s" % file_name)
+
+
+def get_pics_abspath(idx):
+    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
+    if os.path.exists(file_name): return [file_name]
+
+    res = []
+    while True:
+        file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (idx, len(res) + 1)))
+        if os.path.exists(file_name): res.append(file_name)
+        else: break
+
+    return res
 
 
 def download_driver():
@@ -85,6 +105,20 @@ def login():
     elem.click()
 
 
+def extract_content_tags(text):
+    segments = re.split(r'#\w+', text)
+    hashtags = re.findall(r'#\w+', text)
+    result = []
+
+    for i in range(max(len(segments), len(hashtags))):
+        if i < len(segments) and segments[i].strip() != '':
+            result.append(segments[i].strip())
+        if i < len(hashtags):
+            result.append(hashtags[i])
+
+    return result
+
+
 def publish():
     global count
 
@@ -110,7 +144,10 @@ def publish():
     # 输入按钮
     upload_all = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    upload_all.send_keys(get_pic_abspath(count))
+    pics = get_pics_abspath(count)
+    # upload_all.send_keys(*pics)
+    for pic in pics: upload_all.send_keys(pic)
+
     # upload_all.send_keys(base_photo1)
     # 判断图片上传成功
     while True:
@@ -126,6 +163,8 @@ def publish():
     title_text = get_title(count)
     content_text = get_content(count)
 
+    content_tags = extract_content_tags(content_text.replace("\n", "<br/>"))
+
     JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
       var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
@@ -140,12 +179,25 @@ def publish():
     # title.send_keys(title_content)
     time.sleep(3)
 
-    # 填写内容信息
-    content_path = '//*[@id="post-textarea"]'
-    content_elm = driver.find_element(By.XPATH, content_path)
-    driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
-                          content_text.replace("\n", "<br/>"), "innerHTML")
-    # content.send_keys(description)
+    for content_tag in content_tags:
+        content_path = '//*[@id="post-textarea"]'
+        content_elm = driver.find_element(By.XPATH, content_path)
+
+        if content_tag.startswith("#"):
+            topic_path = 'topicBtn'
+            topic_elm = driver.find_element(By.ID, topic_path)
+            topic_elm.click()
+
+            content_tag = content_tag[1:]
+            content_elm.send_keys(content_tag)
+            time.sleep(3)
+            content_elm.send_keys(Keys.ENTER)
+
+        else:
+            # 填写内容信息
+            driver.execute_script(JS_CODE_ADD_TEXT, content_elm, content_tag, "innerHTML")
+            # content.send_keys(description)
+
     time.sleep(3)
 
     # 发布内容

@@ -12,7 +12,7 @@ import os
 import shutil
 import time
 
-VIDEO_ROOT = "./video"
+VIDEO_ROOT = "./voutput"
 
 VX_VIDEO_COUNT_FILE = "vx_count.txt"
 PUB_VX_VIDEO_COUNT_FILE = "vx_pub_count.txt"
@@ -99,7 +99,7 @@ def publish():
     time.sleep(3)
     # 上传新视频
     # 将视频文件转化为二进制文件
-    with open(get_vi_abspath(0), 'rb') as video_file:
+    with open(get_vi_abspath(1), 'rb') as video_file:
         video_binary = video_file.read()
 
     video_base64 = base64.b64encode(video_binary).decode('utf-8')
@@ -135,7 +135,7 @@ def publish():
     pNVideo_path = 'input'
     pNVideo = driver.find_element(By.CSS_SELECTOR, pNVideo_path)
 
-    pNVideo.send_keys(get_vi_abspath(0))
+    pNVideo.send_keys(get_vi_abspath(1))
     time.sleep(1)
     # TODO 需要再改vx_count
     # driver.execute_script(f"arguments[0].value = '{get_vi_abspath(0)}", pVideo)

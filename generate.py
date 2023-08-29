@@ -120,35 +120,37 @@ def generate():
 
     files = os.listdir(PICTURE_ROOT)
 
-    output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
+    for i in range(pic_count):
+        if pic_count == 1: output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % count)
+        else: output_file = os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (count, i + 1))
 
-    if pic_mode == "9_pic":
-        files = random.sample(files, k=9)
-        files = [os.path.join(PICTURE_ROOT, file) for file in files]
-        output_image = generate_9_pic(files)
+        if pic_mode == "9_pic":
+            files = random.sample(files, k=9)
+            files = [os.path.join(PICTURE_ROOT, file) for file in files]
+            output_image = generate_9_pic(files)
 
-        if use_title: output_image = add_pic_title(output_image)
+            if use_title: output_image = add_pic_title(output_image)
 
-        output_image.save(output_file)
-
-    elif pic_mode == "4_pic":
-        files = random.sample(files, k=4)
-        files = [os.path.join(PICTURE_ROOT, file) for file in files]
-        output_image = generate_4_pic(files)
-
-        if use_title: output_image = add_pic_title(output_image)
-
-        output_image.save(output_file)
-
-    elif pic_mode == "single":
-        file = os.path.join(PICTURE_ROOT, random.choice(files))
-
-        if use_title:
-            output_image = Image.open(file)
-            output_image = add_pic_title(output_image)
             output_image.save(output_file)
-        else:
-            shutil.copy(file, output_file)
+
+        elif pic_mode == "4_pic":
+            files = random.sample(files, k=4)
+            files = [os.path.join(PICTURE_ROOT, file) for file in files]
+            output_image = generate_4_pic(files)
+
+            if use_title: output_image = add_pic_title(output_image)
+
+            output_image.save(output_file)
+
+        elif pic_mode == "single":
+            file = os.path.join(PICTURE_ROOT, random.choice(files))
+
+            if use_title:
+                output_image = Image.open(file)
+                output_image = add_pic_title(output_image)
+                output_image.save(output_file)
+            else:
+                shutil.copy(file, output_file)
 
     with open(TITLE_PROMPT_FILE, encoding="utf8") as file:
         title_prompt = file.read()
@@ -190,6 +192,7 @@ if __name__ == '__main__':
     host = config.get('Generate', 'host')
     api_key = config.get('Generate', 'openai_key')
     interval = int(config.get('Generate', 'interval'))
+    pic_count = int(config.get('Generate', 'pic_count'))
     max_count = int(config.get('Generate', 'max_count'))
     pic_mode = config.get('Generate', 'pic_mode').lower()
     use_title = config.get('Generate', 'use_title').lower() == "true"
