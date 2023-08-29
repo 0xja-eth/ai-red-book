@@ -12,7 +12,7 @@ import shutil
 import time
 import configparser
 
-VIDEO_COUNT_FILE = "vcount.txt"
+VIDEO_COUNT_FILE = "vxcount.txt"
 PUB_VIDEO_COUNT_FILE = "vxpub_count.txt"
 
 OUTPUT_ROOT = "./voutput"
@@ -93,9 +93,16 @@ def publish():
     time.sleep(3)
 
     # 点击发布视频
-    publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
-    publish_ele = driver.find_element(By.XPATH, publish_path)
-    driver.execute_script(JS_CLICK, publish_ele)
+    if count == 1:
+        publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
+        publish_ele = driver.find_element(By.XPATH, publish_path)
+        driver.execute_script(JS_CLICK, publish_ele)
+    else:
+        publish_path = 'weui-desktop-btn.weui-desktop-btn_primary'
+        publish_eles = driver.find_elements(By.CLASS_NAME, publish_path)
+        publish_ele = publish_eles[1]
+        driver.execute_script(JS_CLICK, publish_ele)
+
 
     time.sleep(3)
 
@@ -109,7 +116,7 @@ def publish():
 
     p_video_path = 'input'
     p_video = driver.find_element(By.CSS_SELECTOR, p_video_path)
-    p_video.send_keys(get_vi_abspath(count))
+    p_video.send_keys(get_vi_abspath(1))
 
     time.sleep(1)
 
