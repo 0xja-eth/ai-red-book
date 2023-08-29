@@ -61,28 +61,9 @@ def publish():
 
     print("Start publish video: %d / %d" % (vx_count, vx_max_count))
 
-    # time.sleep(20)
-
-    # JS.Click()
-    JS_Click = """
+    JS_CLICK = """
     arguments[0].click()
     """
-
-    # # 点击内容管理
-    # cManage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
-    # cManage_wait = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, cManage_path)))
-    # cManage = driver.find_element(By.CLASS_NAME, cManage_path)
-    # cManage.click()
-    #
-    # time.sleep(20)
-    #
-    # # 点击视频管理
-    # vManage_path = 'weui-desktop-menu__link.weui-desktop-menu__only-icon'
-    # vManage_wait = wait.Until()
-    # vManage = driver.find_element(By.CLASS_NAME, vManage_path)
-    # vManage.click()
-    #
-    # time.sleep(10)
 
     cManage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
     cManage_wait = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, cManage_path)))
@@ -91,62 +72,25 @@ def publish():
 
     # 点击发布视频
     publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
-    # 等待按钮找到
-    # publish_wait = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, publish_path)))
     publish = driver.find_element(By.XPATH, publish_path)
-    driver.execute_script(JS_Click, publish)
+    driver.execute_script(JS_CLICK, publish)
 
     time.sleep(3)
-    # 上传新视频
-    # 将视频文件转化为二进制文件
-    with open(get_vi_abspath(0), 'rb') as video_file:
-        video_binary = video_file.read()
 
-    video_base64 = base64.b64encode(video_binary).decode('utf-8')
-
-    JS_VIDEO_ADD = """
-    console.log("arguments", arguments)
-    var elm = arguments[0], video = arguments[1];
-    var file = new File([video], "video.mp4", {type: "video/mp4"});
-    Object.defineProperty(elm, "files", {
-        value: [file],
-        writable: true,
-    });
-    elm.dispatchEvent(new Event('change', { bubbles: true }));
-    """
-
-    # 设置为可见
-    JS_VIDSABLE = """
-    arguments[0].style.display = 'block';
-    """
+    # 设置输入为可见
     JS_INPUT_VISABLE = """
     var input = document.querySelector('input');
     input.style.display = 'block';
     """
 
-    pVideo_path = 'upload-content'
-    # pVideo_path = 'input[type="file"]'
-    # pVideo_path = 'input'
-    # pVideo_wait = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, pVideo_path)))
-    pVideo = driver.find_element(By.CLASS_NAME, pVideo_path)
-
     driver.execute_script(JS_INPUT_VISABLE)
 
-    pNVideo_path = 'input'
-    pNVideo = driver.find_element(By.CSS_SELECTOR, pNVideo_path)
+    pVideo_path = 'input'
+    pVideo = driver.find_element(By.CSS_SELECTOR, pVideo_path)
 
-    pNVideo.send_keys(get_vi_abspath(0))
-    time.sleep(1)
     # TODO 需要再改vx_count
-    # driver.execute_script(f"arguments[0].value = '{get_vi_abspath(0)}", pVideo)
-    # print(video_binary)
-
-
-    # driver.execute_script(JS_VIDEO_ADD, pVideo, video_base64)
-
-    # driver.execute_script(JS_VIDSABLE, pVideo)
-
-    # pVideo.send_keys(get_vi_abspath(0))
+    pVideo.send_keys(get_vi_abspath(0))
+    time.sleep(1)
 
     # 等待视频上传完成
     while True:
@@ -159,14 +103,21 @@ def publish():
 
     print("视频上传完成!")
 
+    time.sleep(3)
 
-    # TODO 需要具体内容
+    # TODO 判断是否不显示位置
+    if True:
+        location_path = 'option-item.active'
+        location_none = driver.find_element(By.CLASS_NAME, location_path)
+        driver.execute_script(JS_CLICK, location_none)
+
+    # TODO 需要具体内容，title介于6-20字之间
     title = "测试测试测试测试"
-    content = "测试1111"
+    content = "测试11111"
 
     JS_CODE_ADD_TEXT = """
             console.log("arguments", arguments)
-            var elm = arguments[0], txt = arguments[1], key = arguments[2] || "textContent";
+            var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
             elm[key] += txt;
             elm.dispatchEvent(new Event('change'));
           """
@@ -174,19 +125,29 @@ def publish():
     # 上传视频描述
     description_path = "input-editor"
     description_publish = driver.find_element(By.CLASS_NAME, description_path)
+    description_key = "textContent"
 
-    driver.execute_script(JS_CODE_ADD_TEXT, description_publish, content)
+    driver.execute_script(JS_CODE_ADD_TEXT, description_publish, content, description_key)
     time.sleep(3)
 
-    title_path = "weui-desktop-form__input"
-    title_publish = driver.find_element(By.CLASS_NAME, title_path)
+    title_path = 'weui-desktop-form__input'
+    title_publishs = driver.find_elements(By.CLASS_NAME, title_path)
 
-    driver.execute_script(JS_VIDSABLE, title_publish)
-    time.sleep(1)
-    title_publish.send_keys(title)
-    # driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title)
+    title_publish = title_publishs[3]
+
+    # driver.execute_script(JS_VIDSABLE, title_publish)
+    # time.sleep(1)
+    # title_publish[1].send_keys(title)
+    driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title)
     time.sleep(3)
 
+    # 发送
+    confirm_path = 'weui-desktop-btn.weui-desktop-btn_primary'
+    confirms = driver.find_elements(By.CLASS_NAME, confirm_path)
+    confirm = confirms[7]
+    driver.execute_script(JS_CLICK, confirm)
+
+    time.sleep(20)
 
 def main():
     init_driver()
