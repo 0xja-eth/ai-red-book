@@ -116,7 +116,7 @@ def publish():
 
     p_video_path = 'input'
     p_video = driver.find_element(By.CSS_SELECTOR, p_video_path)
-    p_video.send_keys(get_vi_abspath(1))
+    p_video.send_keys(get_vi_abspath(count))
 
     time.sleep(1)
 
