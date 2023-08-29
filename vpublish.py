@@ -15,18 +15,18 @@ PUB_VIDEO_COUNT_FILE = "./vpub_count.txt"
 
 OUTPUT_ROOT = "./voutput"
 
-with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    max_count = int(vc_file.read())
-
-with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    count = int(vc_file.read())
-
 driver: webdriver.Chrome
 wait: WebDriverWait
 
 # 读取配置文件
 config = configparser.ConfigParser()
 config.read('config.ini')
+
+with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
+    max_count = int(vc_file.read())
+
+with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
+    count = int(vc_file.read())
 
 
 def get_title(idx):

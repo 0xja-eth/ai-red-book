@@ -6,40 +6,50 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.action_chains import ActionChains
+
 import os
 import shutil
 import time
+import configparser
 
-VIDEO_ROOT = "./voutput"
+VIDEO_COUNT_FILE = "vcount.txt"
+PUB_VIDEO_COUNT_FILE = "vxpub_count.txt"
 
-VX_VIDEO_COUNT_FILE = "vx_count.txt"
-PUB_VX_VIDEO_COUNT_FILE = "vx_pub_count.txt"
+OUTPUT_ROOT = "./voutput"
 
-driver = None
-wait = None
+driver: webdriver.Chrome
+wait: WebDriverWait
 
-with open(VX_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    vx_max_count = int(vc_file.read())
+# 读取配置文件
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-with open(PUB_VX_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    vx_count = int(vc_file.read())
+with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
+    max_count = int(vc_file.read())
 
+with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
+    count = int(vc_file.read())
+
+
+def get_title(idx):
+    file_name = os.path.join(OUTPUT_ROOT, "%d-title.txt" % idx)
+    with open(file_name, encoding="utf8") as file:
+        return file.read()
+
+
+def get_content(idx):
+    file_name = os.path.join(OUTPUT_ROOT, "%d-content.txt" % idx)
+    with open(file_name, encoding="utf8") as file:
+        return file.read()
+
+
+# 获取视频文件路径
 def get_vi_abspath(idx):
-    file_name = os.path.abspath(os.path.join(VIDEO_ROOT, "%d-vi.mp4" % idx))
-    if os.path.exists(file_name): return file_name
-    raise Exception("File not exist: %s " % file_name)
+    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % idx))
+    if os.path.exists(file_name):
+        return file_name
+    raise Exception("File not exist: %s" % file_name)
 
-def init_driver():
-    global driver, wait
-    if not os.path.exists("./chromedriver.exe"):
-        download_driver()
-
-    chromedriver_path = Service("./chromedriver.exe")
-    driver = webdriver.Chrome(service=chromedriver_path)
-    # driver.find_element().send_keys()
-    wait = WebDriverWait(driver, 120)
 
 def download_driver():
     chromedriver_path = ChromeDriverManager().install()
@@ -49,31 +59,43 @@ def download_driver():
     shutil.copy(chromedriver_path, new_chromedriver_path)
 
 
+def init_driver():
+    global driver, wait
+
+    if not os.path.exists("./chromedriver.exe"):
+        download_driver()
+
+    chromedriver_path = Service("./chromedriver.exe")
+    driver = webdriver.Chrome(service=chromedriver_path)
+    wait = WebDriverWait(driver, 120)
+
+
 def login():
     # 网页打开后扫码登录
     driver.get("https://channels.weixin.qq.com/login.html")
 
+
 def publish():
     # TODO 注意此处需要结合小红书中的video进行上传修改count
-    global vx_count
+    global count
 
-    vx_count = vx_count % vx_max_count + 1
+    count = count % max_count + 1
 
-    print("Start publish video: %d / %d" % (vx_count, vx_max_count))
+    print("Start publish video: %d / %d" % (count, max_count))
 
     JS_CLICK = """
     arguments[0].click()
     """
 
-    cManage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
-    cManage_wait = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, cManage_path)))
+    c_manage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
+    wait.until(EC.element_to_be_clickable((By.CLASS_NAME, c_manage_path)))
 
     time.sleep(3)
 
     # 点击发布视频
     publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
-    publish = driver.find_element(By.XPATH, publish_path)
-    driver.execute_script(JS_CLICK, publish)
+    publish_ele = driver.find_element(By.XPATH, publish_path)
+    driver.execute_script(JS_CLICK, publish_ele)
 
     time.sleep(3)
 
@@ -85,12 +107,10 @@ def publish():
 
     driver.execute_script(JS_INPUT_VISABLE)
 
-    pVideo_path = 'input'
-    pVideo = driver.find_element(By.CSS_SELECTOR, pVideo_path)
+    p_video_path = 'input'
+    p_video = driver.find_element(By.CSS_SELECTOR, p_video_path)
+    p_video.send_keys(get_vi_abspath(count))
 
-    pNVideo.send_keys(get_vi_abspath(1))
-    # TODO 需要再改vx_count
-    pVideo.send_keys(get_vi_abspath(0))
     time.sleep(1)
 
     # 等待视频上传完成
@@ -104,6 +124,9 @@ def publish():
 
     print("视频上传完成!")
 
+    title_text = get_title(count)
+    content_text = get_content(count)
+
     time.sleep(3)
 
     # TODO 判断是否不显示位置
@@ -111,10 +134,6 @@ def publish():
         location_path = 'option-item.active'
         location_none = driver.find_element(By.CLASS_NAME, location_path)
         driver.execute_script(JS_CLICK, location_none)
-
-    # TODO 需要具体内容，title介于6-20字之间
-    title = "测试测试测试测试"
-    content = "测试11111"
 
     JS_CODE_ADD_TEXT = """
             console.log("arguments", arguments)
@@ -128,7 +147,8 @@ def publish():
     description_publish = driver.find_element(By.CLASS_NAME, description_path)
     description_key = "textContent"
 
-    driver.execute_script(JS_CODE_ADD_TEXT, description_publish, content, description_key)
+    driver.execute_script(JS_CODE_ADD_TEXT, description_publish, content_text, description_key)
+
     time.sleep(3)
 
     title_path = 'weui-desktop-form__input'
@@ -139,7 +159,8 @@ def publish():
     # driver.execute_script(JS_VIDSABLE, title_publish)
     # time.sleep(1)
     # title_publish[1].send_keys(title)
-    driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title)
+    driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title_text)
+
     time.sleep(3)
 
     # 发送
@@ -148,12 +169,29 @@ def publish():
     confirm = confirms[7]
     driver.execute_script(JS_CLICK, confirm)
 
-    time.sleep(20)
+    with open(PUB_VIDEO_COUNT_FILE, "w", encoding="utf8") as file:
+        file.write(str(count))
+
+    print("End publish: %s: %s" % (title_text, content_text))
+
 
 def main():
     init_driver()
     login()
-    publish()
+
+    while True:
+        try:
+            publish()
+            time.sleep(interval)
+        except Exception as e:
+            print("Error publish: %s" % str(e))
+
+        driver.refresh()
+        if count >= max_count and not is_looped: break
+
 
 if __name__ == '__main__':
+    interval = int(config.get('VPublish', 'interval'))
+    is_looped = config.get('VPublish', 'is_looped').lower() == "true"
+
     main()
