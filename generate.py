@@ -192,7 +192,7 @@ if __name__ == '__main__':
     host = config.get('Generate', 'host')
     api_key = config.get('Generate', 'openai_key')
     interval = int(config.get('Generate', 'interval'))
-    pic_count = int(config.get('Generate', 'pic_count'))
+    pic_count = int(config.get('Generate', 'pic_count') or "1")
     max_count = int(config.get('Generate', 'max_count'))
     pic_mode = config.get('Generate', 'pic_mode').lower()
     use_title = config.get('Generate', 'use_title').lower() == "true"
