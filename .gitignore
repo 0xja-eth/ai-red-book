@@ -5,3 +5,4 @@ dist
 *.dll
 *.mp4
 chromedriver.exe
+*.zip
