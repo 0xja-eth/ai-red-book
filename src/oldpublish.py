@@ -29,7 +29,7 @@ wait: WebDriverWait
 
 # 读取配置文件
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read("./RedBook/config.ini")
 
 
 def get_title(idx):

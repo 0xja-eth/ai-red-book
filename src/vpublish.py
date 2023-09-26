@@ -20,7 +20,7 @@ wait: WebDriverWait
 
 # 读取配置文件
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read("./RedBook/config.ini")
 
 with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
     max_count = int(vc_file.read())
@@ -144,7 +144,9 @@ def publish():
     time.sleep(3)
 
     # 上传
+    #css-k3hpu2.css-osq2ks.dyn.publishBtn.red
     p_path = 'css-k3hpu2.css-osq2ks.dyn.publishBtn.red'
+    
     p_wait = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, p_path)))
     p = driver.find_element(By.CLASS_NAME, p_path)
     p.click()
