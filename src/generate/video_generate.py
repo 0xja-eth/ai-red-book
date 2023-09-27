@@ -1,4 +1,4 @@
-
+import core.publishBase as pb
 import time
 from PIL import Image
 import configparser
@@ -10,22 +10,14 @@ import shutil
 
 # 基本信息
 # 图片存放路径
-VIDEO_ROOT = "./video"
+VIDEO_ROOT = "../input/video"
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
-COUNT_FILE = "./vcount.txt"
 
 TITLE_PIC_FILE = "./title.png"
 
-OUTPUT_ROOT = "./voutput"
 
-# 读取配置文件
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-with open(COUNT_FILE, encoding="utf8") as c_file:
-    count = int(c_file.read())
 
 
 # 自动铺满
@@ -91,15 +83,14 @@ def add_pic_title(image):
 
 
 def generate():
-    global count
 
-    count += 1
+    pb.max_count += 1
 
-    print("Start generate: %d" % count)
+    print("Start generate: %d" % pb.max_count)
 
     files = os.listdir(VIDEO_ROOT)
-    file = os.path.join(VIDEO_ROOT, files[(count - 1) % len(files)])
-    output_file = os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % count)
+    file = os.path.join(VIDEO_ROOT, files[(pb.max_count - 1) % len(files)])
+    output_file = os.path.join(pb.OUTPUT_ROOT, "%d-vi.mp4" % pb.max_count)
 
     shutil.copy(file, output_file)
 
@@ -119,31 +110,31 @@ def generate():
     output_title = res_json["title"]
     output_content = res_json["content"]
 
-    output_title_path = os.path.join(OUTPUT_ROOT, "%d-title.txt" % count)
+    output_title_path = os.path.join(pb.OUTPUT_ROOT, "%d-title.txt" % pb.count)
     with open(output_title_path, "w", encoding="utf8") as file:
         file.write(output_title)
 
-    output_content_path = os.path.join(OUTPUT_ROOT, "%d-content.txt" % count)
+    output_content_path = os.path.join(pb.OUTPUT_ROOT, "%d-content.txt" % pb.count)
     with open(output_content_path, "w", encoding="utf8") as file:
         file.write(output_content)
 
-    with open(COUNT_FILE, "w", encoding="utf8") as file:
-        file.write(str(count))
+    pb.set_count('max_count', pb.max_count)
 
     print("End generate: %s: %s" % (output_title, output_content))
 
 
 def main():
-    while count < max_count:
+    pb.get_count()
+    while pb.max_count < max_count:
         generate()
         time.sleep(interval)
 
 
 if __name__ == '__main__':
-    host = config.get('Generate', 'host')
-    api_key = config.get('Generate', 'openai_key')
-    interval = int(config.get('Generate', 'interval'))
-    max_count = int(config.get('Generate', 'max_count'))
+    host = pb.config.get('Generate', 'host')
+    api_key = pb.config.get('Generate', 'openai_key')
+    interval = int(pb.config.get('Generate', 'interval'))
+    max_count = int(pb.config.get('Generate', 'max_count'))
 
     main()
 
