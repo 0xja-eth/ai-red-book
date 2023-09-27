@@ -1,4 +1,7 @@
+import json
 import re
+
+import src.core.publishBase as pb
 import time
 from selenium import webdriver
 from selenium.webdriver import Keys
@@ -6,57 +9,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 
 import shutil
 import os
 import configparser
 
-VIDEO_COUNT_FILE = "./vcount.txt"
-PUB_VIDEO_COUNT_FILE = "./vpub_count.txt"
-
-OUTPUT_ROOT = "./voutput"
-
 driver: webdriver.Chrome
 wait: WebDriverWait
-
-# 读取配置文件
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    max_count = int(vc_file.read())
-
-with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    count = int(vc_file.read())
-
-
-def get_title(idx):
-    file_name = os.path.join(OUTPUT_ROOT, "%d-title.txt" % idx)
-    with open(file_name, encoding="utf8") as file:
-        return file.read()
-
-
-def get_content(idx):
-    file_name = os.path.join(OUTPUT_ROOT, "%d-content.txt" % idx)
-    with open(file_name, encoding="utf8") as file:
-        return file.read()
-
-
-# 获取视频文件路径
-def get_vi_abspath(idx):
-    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % idx))
-    if os.path.exists(file_name):
-        return file_name
-    raise Exception("File not exist: %s" % file_name)
-
-
-def download_driver():
-    chromedriver_path = ChromeDriverManager().install()
-
-    # 将chromedriver移动到当前目录
-    new_chromedriver_path = os.path.join(".", "chromedriver.exe")
-    shutil.copy(chromedriver_path, new_chromedriver_path)
 
 
 # 初始化浏览器驱动
@@ -64,25 +24,12 @@ def init_driver():
     global driver, wait
 
     if not os.path.exists("./chromedriver.exe"):
-        download_driver()
+        pb.download_driver()
 
     chromedriver_path = Service("./chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
     wait = WebDriverWait(driver, 120)
 
-
-def extract_content_tags(text):
-    segments = re.split(r'#\w+', text)
-    hashtags = re.findall(r'#\w+', text)
-    result = []
-
-    for i in range(max(len(segments), len(hashtags))):
-        if i < len(segments) and segments[i].strip() != '':
-            result.append(segments[i].strip())
-        if i < len(hashtags):
-            result.append(hashtags[i])
-
-    return result
 
 
 def login():
@@ -107,9 +54,9 @@ def login():
 def publish():
     global count
 
-    count = count % max_count + 1
+    pb.count = pb.count % pb.max_count + 1
 
-    print("Start publish video: %d / %d" % (count, max_count))
+    print("Start publish video: %d / %d" % (pb.count, pb.max_count))
 
     # 确定为已登录状态
     # 首先找到发布视频，然后点击
@@ -122,7 +69,7 @@ def publish():
 
     upload_video = driver.find_element(By.CLASS_NAME, "upload-btn-input--1NeEX")
 
-    upload_video.send_keys(get_vi_abspath(count))
+    upload_video.send_keys(pb.get_vi_abspath(count))
 
     # 等待视频上传完成
     while True:
@@ -136,8 +83,8 @@ def publish():
     print("视频已上传完成！")
 
     # 需要再修改
-    title_text = get_title(count)
-    content_text = get_content(count)
+    title_text = pb.get_title(count)
+    content_text = pb.get_content(count)
 
     JS_CODE_ADD_TEXT = """
          console.log("arguments", arguments)
@@ -154,7 +101,7 @@ def publish():
 
 
     # 上传内容
-    content_tags = extract_content_tags(content_text.replace("\n", "<br/>"))
+    content_tags = pb.extract_content_tags(content_text.replace("\n", "<br/>"))
 
     content_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[2]/div/div/div/div[1]/div'
     content_elm = driver.find_element(By.XPATH, content_path)
@@ -190,8 +137,7 @@ def publish():
     p.click()
     # driver.find_element_by_xpath('//*[@id="root"]/div/div/div[2]/div[1]/div[17]/button[1]').click()
 
-    with open(PUB_VIDEO_COUNT_FILE, "w", encoding="utf8") as file:
-        file.write(str(count))
+    pb.set_count('count', count)
 
     print("End publish: %s: %s" % (title_text, content_text))
 
@@ -209,11 +155,11 @@ def main():
             print("Error publish: %s" % str(e))
 
         driver.refresh()
-        if count >= max_count and not is_looped: break
+        if pb.count >= pb.max_count and not is_looped: break
 
 
 if __name__ == '__main__':
-    interval = int(config.get('DYPublish', 'interval'))
-    is_looped = config.get('DYPublish', 'is_looped').lower() == "true"
+    interval = int(pb.config.get('DYPublish', 'interval'))
+    is_looped = pb.config.get('DYPublish', 'is_looped').lower() == "true"
 
     main()

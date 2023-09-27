@@ -1,5 +1,6 @@
 import base64
-
+import src.core.publishBase as pb
+import json
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -12,58 +13,15 @@ import shutil
 import time
 import configparser
 
-VIDEO_COUNT_FILE = "vxcount.txt"
-PUB_VIDEO_COUNT_FILE = "vxpub_count.txt"
-
-OUTPUT_ROOT = "./voutput"
-
 driver: webdriver.Chrome
 wait: WebDriverWait
-
-# 读取配置文件
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    max_count = int(vc_file.read())
-
-with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-    count = int(vc_file.read())
-
-
-def get_title(idx):
-    file_name = os.path.join(OUTPUT_ROOT, "%d-title.txt" % idx)
-    with open(file_name, encoding="utf8") as file:
-        return file.read()
-
-
-def get_content(idx):
-    file_name = os.path.join(OUTPUT_ROOT, "%d-content.txt" % idx)
-    with open(file_name, encoding="utf8") as file:
-        return file.read()
-
-
-# 获取视频文件路径
-def get_vi_abspath(idx):
-    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-vi.mp4" % idx))
-    if os.path.exists(file_name):
-        return file_name
-    raise Exception("File not exist: %s" % file_name)
-
-
-def download_driver():
-    chromedriver_path = ChromeDriverManager().install()
-
-    # 将chromedriver移动到当前目录
-    new_chromedriver_path = os.path.join(".", "chromedriver.exe")
-    shutil.copy(chromedriver_path, new_chromedriver_path)
 
 
 def init_driver():
     global driver, wait
 
     if not os.path.exists("./chromedriver.exe"):
-        download_driver()
+        pb.download_driver()
 
     chromedriver_path = Service("./chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
@@ -79,9 +37,9 @@ def publish():
     # TODO 注意此处需要结合小红书中的video进行上传修改count
     global count
 
-    count = count % max_count + 1
+    pb.count = pb.count % pb.max_count + 1
 
-    print("Start publish video: %d / %d" % (count, max_count))
+    print("Start publish video: %d / %d" % (pb.count, pb.max_count))
 
     JS_CLICK = """
     arguments[0].click()
@@ -116,7 +74,7 @@ def publish():
 
     p_video_path = 'input'
     p_video = driver.find_element(By.CSS_SELECTOR, p_video_path)
-    p_video.send_keys(get_vi_abspath(count))
+    p_video.send_keys(pb.get_vi_abspath(count))
 
     time.sleep(1)
 
@@ -131,8 +89,8 @@ def publish():
 
     print("视频上传完成!")
 
-    title_text = get_title(count)
-    content_text = get_content(count)
+    title_text = pb.get_title(count)
+    content_text = pb.get_content(count)
 
     time.sleep(3)
 
@@ -176,8 +134,7 @@ def publish():
     confirm = confirms[7]
     driver.execute_script(JS_CLICK, confirm)
 
-    with open(PUB_VIDEO_COUNT_FILE, "w", encoding="utf8") as file:
-        file.write(str(count))
+    pb.set_count('count', count)
 
     print("End publish: %s: %s" % (title_text, content_text))
 
@@ -194,11 +151,11 @@ def main():
             print("Error publish: %s" % str(e))
 
         driver.refresh()
-        if count >= max_count and not is_looped: break
+        if pb.count >= pb.max_count and not is_looped: break
 
 
 if __name__ == '__main__':
-    interval = int(config.get('VPublish', 'interval'))
-    is_looped = config.get('VPublish', 'is_looped').lower() == "true"
+    interval = int(pb.config.get('VPublish', 'interval'))
+    is_looped = pb.config.get('VPublish', 'is_looped').lower() == "true"
 
     main()

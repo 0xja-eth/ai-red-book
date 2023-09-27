@@ -1,3 +1,5 @@
+import json
+import src.core.publishBase as pb
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -13,74 +15,16 @@ import os
 import configparser
 import re
 
-COUNT_FILE = "./count.txt"
-PUB_COUNT_FILE = "./pub_count.txt"
-
-OUTPUT_ROOT = "./output"
-
-with open(COUNT_FILE, encoding="utf8") as c_file:
-    max_count = int(c_file.read())
-
-with open(PUB_COUNT_FILE, encoding="utf8") as c_file:
-    count = int(c_file.read())
-
 driver: webdriver.Chrome
 wait: WebDriverWait
 
 # 读取配置文件
-config = configparser.ConfigParser()
-config.read("./RedBook/config.ini")
-
-
-def get_title(idx):
-    file_name = os.path.join(OUTPUT_ROOT, "%d-title.txt" % idx)
-    with open(file_name, encoding="utf8") as file:
-        return file.read()
-
-
-def get_content(idx):
-    file_name = os.path.join(OUTPUT_ROOT, "%d-content.txt" % idx)
-    with open(file_name, encoding="utf8") as file:
-        return file.read()
-
-
-def get_pic_abspath(idx, order=0):
-    if order == 0:
-        file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
-        if os.path.exists(file_name): return file_name
-
-    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (idx, order)))
-    if os.path.exists(file_name): return file_name
-
-    raise Exception("File not exist: %s" % file_name)
-
-
-def get_pics_abspath(idx):
-    file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % idx))
-    if os.path.exists(file_name): return [file_name]
-
-    res = []
-    while True:
-        file_name = os.path.abspath(os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (idx, len(res) + 1)))
-        if os.path.exists(file_name): res.append(file_name)
-        else: break
-
-    return res
-
-
-def download_driver():
-    chromedriver_path = ChromeDriverManager().install()
-
-    # 将chromedriver移动到当前目录
-    new_chromedriver_path = os.path.join(".", "chromedriver.exe")
-    shutil.copy(chromedriver_path, new_chromedriver_path)
-
 
 def init_driver():
     global driver, wait
 
     if not os.path.exists("./chromedriver.exe"):
-        download_driver()
+        pb.download_driver()
 
     chromedriver_path = Service("./chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
@@ -105,26 +49,12 @@ def login():
     elem.click()
 
 
-def extract_content_tags(text):
-    segments = re.split(r'#\w+', text)
-    hashtags = re.findall(r'#\w+', text)
-    result = []
-
-    for i in range(max(len(segments), len(hashtags))):
-        if i < len(segments) and segments[i].strip() != '':
-            result.append(segments[i].strip())
-        if i < len(hashtags):
-            result.append(hashtags[i])
-
-    return result
-
-
 def publish():
     global count
 
-    count = count % max_count + 1
+    pb.count = pb.count % pb.max_count + 1
 
-    print("Start publish: %d / %d" % (count, max_count))
+    print("Start publish: %d / %d" % (pb.count, pb.max_count))
 
     # 确定为已登陆状态
     # 首先先找到发布笔记，然后点击
@@ -144,7 +74,7 @@ def publish():
     # 输入按钮
     upload_all = driver.find_element(By.CLASS_NAME, "upload-input")
 
-    pics = get_pics_abspath(count)
+    pics = pb.get_pics_abspath(count)
     # upload_all.send_keys(*pics)
     for pic in pics: upload_all.send_keys(pic)
 
@@ -160,10 +90,10 @@ def publish():
             break
     print("已经上传图片")
 
-    title_text = get_title(count)
-    content_text = get_content(count)
+    title_text = pb.get_title(count)
+    content_text = pb.get_content(count)
 
-    content_tags = extract_content_tags(content_text.replace("\n", "<br/>"))
+    content_tags = pb.extract_content_tags(content_text.replace("\n", "<br/>"))
 
     JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
@@ -207,8 +137,7 @@ def publish():
     p = driver.find_element(By.XPATH, p_path)
     p.click()
 
-    with open(PUB_COUNT_FILE, "w", encoding="utf8") as file:
-        file.write(str(count))
+    pb.set_count('count', count)
 
     print("End publish: %s: %s" % (title_text, content_text))
 
@@ -225,11 +154,11 @@ def main():
             print("Error publish: %s" % str(e))
 
         driver.refresh()
-        if count >= max_count and not is_looped: break
+        if pb.count >= pb.max_count and not is_looped: break
 
 
 if __name__ == '__main__':
-    interval = int(config.get('Publish', 'interval'))
-    is_looped = config.get('Publish', 'is_looped').lower() == "true"
+    interval = int(pb.config.get('Publish', 'interval'))
+    is_looped = pb.config.get('Publish', 'is_looped').lower() == "true"
 
     main()
