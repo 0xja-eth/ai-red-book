@@ -76,6 +76,10 @@ def save_title_content(title, content):
   output_content_path = os.path.join(OUTPUT_ROOT, "%d-content.txt" % pb.max_count)
   with open(output_content_path, "w", encoding="utf8") as file: file.write(content)
 
+def upload_generation(title_prompt, content_prompt, title, content):
+  # TODO: 上传Generation
+  pass
+
 def generate():
   pb.max_count += 1
   print("Start generate: %d" % pb.max_count)
@@ -84,6 +88,7 @@ def generate():
 
   title_prompt, content_prompt = load_title_content_prompts()
   title, content = generate_title_content(title_prompt, content_prompt)
+  upload_generation(title_prompt, content_prompt, title, content)
   save_title_content(title, content)
 
   pb.set_count('max_count', pb.max_count)
