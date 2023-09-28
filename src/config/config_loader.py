@@ -3,7 +3,7 @@ import configparser
 
 # 读取配置文件
 config = configparser.ConfigParser()
-config.read('../config.ini')
+config.read('../../config.ini')
 
 def get(section, key): return config.get(section, key)
 

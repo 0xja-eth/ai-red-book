@@ -23,10 +23,10 @@ wait: WebDriverWait
 def init_driver():
     global driver, wait
 
-    if not os.path.exists("./chromedriver.exe"):
+    if not os.path.exists("../../chromedriver.exe"):
         pb.download_driver()
 
-    chromedriver_path = Service("./chromedriver.exe")
+    chromedriver_path = Service("../../chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
     wait = WebDriverWait(driver, 120)
 
