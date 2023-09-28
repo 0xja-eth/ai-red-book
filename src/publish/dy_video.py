@@ -15,6 +15,8 @@ import shutil
 import os
 import configparser
 
+from src.publish.AutoLogin import AutoLogin
+
 driver: webdriver.Chrome
 wait: WebDriverWait
 
@@ -29,25 +31,6 @@ def init_driver():
     chromedriver_path = Service("./chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
     wait = WebDriverWait(driver, 120)
-
-
-
-def login():
-    driver.get("https://creator.douyin.com/")
-    # 登录之后采用如下代码输出cookie
-    # for cookie in manual_cookies:
-    #     print(cookie)
-    #     driver.add_cookie(cookie)
-    # driver.get("https://creator.xiaohongshu.com/publish/publish?source=official")
-    # upload_img = driver.find_element(By.XPATH, "//*input[@type='file' and @class=‘upload-input’]")
-
-    # time.sleep(60)
-
-    # 扫码登录
-    login_ui_path = '/html/body/div[1]/div/section/header/div[1]/div/div/div/div[2]/span'
-    element = wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
-    elem = driver.find_element(By.XPATH, login_ui_path)
-    elem.click()
 
 
 # 发布视频
@@ -144,7 +127,7 @@ def publish():
 
 def main():
     init_driver()
-    login()
+    AutoLogin(driver, wait, "dy_video")
 
     while True:
         try:

@@ -15,6 +15,8 @@ import os
 import configparser
 import re
 
+from src.publish.AutoLogin import AutoLogin
+
 driver: webdriver.Chrome
 wait: WebDriverWait
 
@@ -30,23 +32,41 @@ def init_driver():
     driver = webdriver.Chrome(service=chromedriver_path)
     wait = WebDriverWait(driver, 120)
 
+cookiesFilename="./xhs_article_cookies.json"
+def load_cookies():
+    #检测是否存在cookies文件
+    if not os.path.exists(cookiesFilename):
+        return []
+    #返回cookies
+    with open(cookiesFilename, "r", encoding="utf8") as file:
+        cookies = json.load(file)
+    return cookies
+
+def save_cookies():
+    cookies = driver.get_cookies()
+    print("cookies:", cookies)
+    #清空cookies文件
+    with open(cookiesFilename, "w", encoding="utf8") as file:
+        file.truncate()
+    with open(cookiesFilename, "w", encoding="utf8") as file:
+        json.dump(cookies, file)
 
 def login():
-    driver.get("https://creator.xiaohongshu.com/publish/publish?source=official")
-    # 登录之后采用如下代码输出cookie
-    # for cookie in manual_cookies:
-    #     print(cookie)
-    #     driver.add_cookie(cookie)
-    # driver.get("https://creator.xiaohongshu.com/publish/publish?source=official")
-    # upload_img = driver.find_element(By.XPATH, "//*input[@type='file' and @class=‘upload-input’]")
-
-    # time.sleep(60)
+    driver.get("https://creator.xiaohongshu.com/")
+    cookies = load_cookies()
+    for cookie in cookies:
+        driver.add_cookie(cookie)
+    driver.refresh()
 
     # 扫码登录
     login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
     element = wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
     elem = driver.find_element(By.XPATH, login_ui_path)
     elem.click()
+
+    # 确保登陆成功后（出现发布按钮）保存cookies：
+    wait.until(EC.presence_of_element_located((By.XPATH, "//div[@class='publish-video']")))
+    save_cookies()
 
 
 def publish():
@@ -144,7 +164,8 @@ def publish():
 
 def main():
     init_driver()
-    login()
+    #login()
+    AutoLogin(driver, wait, "xhs_article")
 
     while True:
         try:
