@@ -25,10 +25,10 @@ wait: WebDriverWait
 def init_driver():
     global driver, wait
 
-    if not os.path.exists("./chromedriver.exe"):
+    if not os.path.exists("../../chromedriver.exe"):
         pb.download_driver()
 
-    chromedriver_path = Service("./chromedriver.exe")
+    chromedriver_path = Service("../../chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
     wait = WebDriverWait(driver, 120)
 
@@ -142,7 +142,7 @@ def main():
 
 
 if __name__ == '__main__':
-    interval = int(pb.config.get('DYPublish', 'interval'))
-    is_looped = pb.config.get('DYPublish', 'is_looped').lower() == "true"
+    interval = int(pb.config.get('VPublish', 'interval'))
+    is_looped = pb.config.get('VPublish', 'is_looped').lower() == "true"
 
     main()

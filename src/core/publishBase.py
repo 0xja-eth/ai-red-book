@@ -15,30 +15,36 @@ import configparser
 
 
 count_dict={
-    'maxcount': 7,
-    'count': 6
+    'maxcount': 0,
+    'count': 0
 }
 
+with open('../../state.json', 'w') as count_write_file:
+    json.dump(count_dict, count_write_file)
 
-with open('../count.json', 'r') as count_read_file:
+with open('../../state.json', 'r') as count_read_file:
     count_dict = json.load(count_read_file)
     max_count = count_dict['maxcount']
     count = count_dict['count']
 
-OUTPUT_ROOT = "../output/video"
+OUTPUT_ROOT = "../../output/video"
 
 driver: webdriver.Chrome
 wait: WebDriverWait
 
+# 读取配置文件
+config = configparser.ConfigParser()
+config.read('../../config.ini')
+
 def set_count(str, num):
     count_dict[str] = num
-    with open('./count.json', 'w') as count_write_file:
+    with open('../../state.json', 'w') as count_write_file:
         json.dump(count_dict, count_write_file)
         get_count()
 
 def get_count():
     global max_count, count, count_dict
-    with open('../count.json', 'r') as read_file:
+    with open('../../state.json', 'r') as read_file:
         count_dict = json.load(read_file)
         max_count = count_dict['maxcount']
         count = count_dict['count']
@@ -67,7 +73,7 @@ def download_driver():
     chromedriver_path = ChromeDriverManager().install()
 
     # 将chromedriver移动到当前目录
-    new_chromedriver_path = os.path.join(".", "chromedriver.exe")
+    new_chromedriver_path = os.path.join(".", "../../chromedriver.exe")
     shutil.copy(chromedriver_path, new_chromedriver_path)
 
 
@@ -75,10 +81,10 @@ def download_driver():
 def init_driver():
     global driver, wait
 
-    if not os.path.exists("./chromedriver.exe"):
+    if not os.path.exists("../../chromedriver.exe"):
         download_driver()
 
-    chromedriver_path = Service("./chromedriver.exe")
+    chromedriver_path = Service("../../chromedriver.exe")
     driver = webdriver.Chrome(service=chromedriver_path)
     wait = WebDriverWait(driver, 120)
 
