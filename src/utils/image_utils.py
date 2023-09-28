@@ -1,4 +1,6 @@
 
+from PIL import Image
+
 # 缩放图片
 def resize_image(image, target_width, target_height):
     # 获取原始图片的宽度和高度
@@ -69,10 +71,10 @@ def generate_4_pic(files):
 
 
 # 生成图片标题
-def add_pic_title(image):
+def add_pic_title(image, title_path):
     width, height = image.size
 
-    title_img = Image.open(TITLE_PIC_FILE)
+    title_img = Image.open(title_path)
     title_width, title_height = title_img.size
 
     title_x, title_y = (width - title_width) // 2, (height - title_height) // 2

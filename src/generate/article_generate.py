@@ -25,7 +25,7 @@ def generate_9_pic(files, output_file):
   files = [os.path.join(PICTURE_ROOT, file) for file in files]
   output_image = image.generate_9_pic(files)
 
-  if use_title: output_image = image.add_pic_title(output_image)
+  if use_title: output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
 
   output_image.save(output_file)
 
@@ -34,7 +34,7 @@ def generate_4_pic(files, output_file):
   files = [os.path.join(PICTURE_ROOT, file) for file in files]
   output_image = image.generate_4_pic(files)
 
-  if use_title: output_image = image.add_pic_title(output_image)
+  if use_title: output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
 
   output_image.save(output_file)
 
@@ -43,7 +43,7 @@ def generate_single(files, output_file):
 
   if use_title:
     output_image = Image.open(file)
-    output_image = image.add_pic_title(output_image)
+    output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
     output_image.save(output_file)
   else:
     shutil.copy(file, output_file)
