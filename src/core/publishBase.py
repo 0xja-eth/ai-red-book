@@ -42,7 +42,7 @@ def set_count(str, num):
 
 def get_count():
     global max_count, count, count_dict
-    with open('./count.json', 'r') as read_file:
+    with open('../count.json', 'r') as read_file:
         count_dict = json.load(read_file)
         max_count = count_dict['maxcount']
         count = count_dict['count']

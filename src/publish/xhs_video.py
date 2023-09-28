@@ -12,6 +12,8 @@ import shutil
 import os
 import configparser
 
+from src.publish.AutoLogin import AutoLogin
+
 driver: webdriver.Chrome
 wait: WebDriverWait
 
@@ -117,7 +119,8 @@ def publish():
 
 def main():
     init_driver()
-    login()
+    #login()
+    AutoLogin(driver, wait, "xhs_video")
     pb.get_count()
 
     while True:

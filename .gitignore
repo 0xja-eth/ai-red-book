@@ -6,3 +6,6 @@ dist
 *.mp4
 chromedriver.exe
 *.zip
+
+#生成的cookies.json文件
+src/publish/*.json
