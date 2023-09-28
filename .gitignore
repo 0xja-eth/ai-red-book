@@ -6,3 +6,5 @@ dist
 *.mp4
 chromedriver.exe
 *.zip
+
+.env

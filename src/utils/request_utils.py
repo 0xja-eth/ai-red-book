@@ -1,3 +1,6 @@
+
+import requests, json
+
 class Request:
 
     host = ""

@@ -30,10 +30,6 @@ OUTPUT_ROOT = "../output/video"
 driver: webdriver.Chrome
 wait: WebDriverWait
 
-# 读取配置文件
-config = configparser.ConfigParser()
-config.read('../config.ini')
-
 def set_count(str, num):
     count_dict[str] = num
     with open('./count.json', 'w') as count_write_file:
