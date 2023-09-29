@@ -167,7 +167,7 @@ class Publisher:
     if len(cookies) > 0: self._auto_login(cookies)
     else: cookies = self._do_login()
 
-    self._make_user()
+    self._make_user(cookies)
     self._record_login()
 
   def _auto_login(self, cookies: list):
@@ -177,9 +177,9 @@ class Publisher:
   @abstractmethod
   def _do_login(self) -> list: pass
 
-  def _make_user(self):
+  def _make_user(self, cookies):
     self.user = User(name=self._get_user_name(), platform=self.platform,
-                     cookies=self.get_cookies(), **self._get_user_stat())
+                     cookies=cookies, **self._get_user_stat())
 
   @abstractmethod
   def _get_user_name(self) -> str: pass
@@ -187,15 +187,19 @@ class Publisher:
   def _get_user_stat(self) -> dict: pass
 
   def _record_login(self):
-    login_es = api_utils.login(self.user.name, self.user.platform,
+    login_res = api_utils.login(self.user.name, self.user.platform,
                                self.user.cookies, self.user.stat())
-    self.user = User(**login_es["user"])
+    self.user = User(**login_res["user"])
 
   # endregion
 
   # region Publish
 
   def publish(self):
+    """
+    发布一条内容
+    :return: True if need to break, False if continue next one, None if all success
+    """
     if self.pub_count() >= self.gen_count() and not self.is_looped(): return True
 
     print("Start publish %s: %d/%d" % (self.name(), self.pub_count() + 1, self.gen_count()))
@@ -225,7 +229,8 @@ class Publisher:
     while True:
       try:
         flag = self.publish()
-        if flag: break
+        if flag is True: break
+        if flag is False: continue
         if flag is None: time.sleep(self.interval())
       except Exception as e:
         print("Error publish: %s" % str(e))
