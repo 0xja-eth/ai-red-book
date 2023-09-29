@@ -1,9 +1,9 @@
 
 from src.core.generator import GenerateType
-from src.generate.article_generate import ArticleGenerator
-from src.generate.video_generate import VideoGenerator
+from src.generate import article_generate
+from src.generate import video_generate
 
 GENERATORS = {
-  [GenerateType.Article]: ArticleGenerator(),
-  [GenerateType.Video]: VideoGenerator()
+  [GenerateType.Article]: article_generate.generator,
+  [GenerateType.Video]: video_generate.generator
 }

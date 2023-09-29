@@ -1,22 +1,14 @@
-import src.core.publishBase as pb
 import src.utils.image_utils as image
 from PIL import Image
 import os
 import random
 
-from src.config import config_loader
-from src.core.generator import Generator, GenerateType
+from src.core.generator import Generator, GenerateType, INPUT_ROOT, OUTPUT_ROOT
 
 # 基本信息
 # 图片存放路径
-PICTURE_ROOT = config_loader.file("./input/picture")
-
-TITLE_PROMPT_FILE = config_loader.file("./input/title_prompt.txt")
-CONTENT_PROMPT_FILE = config_loader.file("./input/content_prompt.txt")
-
-TITLE_PIC_FILE = config_loader.file("./input/title.png")
-
-OUTPUT_ROOT = config_loader.file("./output/article")
+PICTURE_ROOT = os.path.join(INPUT_ROOT, "picture")
+TITLE_PIC_FILE = os.path.join(INPUT_ROOT, "title.png")
 
 class ArticleGenerator(Generator):
 
@@ -83,9 +75,9 @@ class ArticleGenerator(Generator):
 
     for i in range(self.pic_count()):
       if self.pic_count() == 1:
-        output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % self.gen_count())
+        output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % self.generating_count)
       else:
-        output_file = os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (self.gen_count(), i + 1))
+        output_file = os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (self.generating_count, i + 1))
 
       if self.pic_mode() == "9_pic":
         output_file = self.generate_9_pic(files, output_file)
@@ -97,3 +89,8 @@ class ArticleGenerator(Generator):
       urls.append(output_file)
 
     return urls
+
+generator = ArticleGenerator()
+
+if __name__ == '__main__':
+  generator.generate()

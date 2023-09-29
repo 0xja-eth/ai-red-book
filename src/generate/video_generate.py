@@ -1,16 +1,10 @@
 import os
 
-from src.core.generator import Generator, GenerateType
-from src.config import config_loader
+from src.core.generator import Generator, GenerateType, INPUT_ROOT
 
 # 基本信息
 # 视频存放路径
-VIDEO_ROOT = config_loader.file("./input/video")
-
-TITLE_PROMPT_FILE = config_loader.file("./input/title_prompt.txt")
-CONTENT_PROMPT_FILE = config_loader.file("./input/content_prompt.txt")
-
-TITLE_PIC_FILE = config_loader.file("./input/title.png")
+VIDEO_ROOT = os.path.join(INPUT_ROOT, "video")
 
 class VideoGenerator(Generator):
 
@@ -21,3 +15,8 @@ class VideoGenerator(Generator):
     files = os.listdir(VIDEO_ROOT)
     file = files[(self.generating_count - 1) % len(files)]
     return [os.path.join(VIDEO_ROOT, file)]
+
+generator = VideoGenerator()
+
+if __name__ == '__main__':
+  generator.generate()
