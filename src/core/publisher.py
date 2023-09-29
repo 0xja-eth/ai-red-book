@@ -86,7 +86,7 @@ class Publisher:
 
   user: User
 
-  def __init__(self, platform, generate_type, login_url):
+  def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
     self.platform = platform
     self.generate_type = generate_type
     self.login_url = login_url
@@ -115,7 +115,7 @@ class Publisher:
 
   def gen_count(self): return get_state("generate", self.gen_name())
   def pub_count(self): return get_state("publish", self.name())
-  def add_count(self):
+  def _add_count(self):
     set_state((self.pub_count() % self.gen_count()) + 1, "publish", self.name())
 
   # endregion
@@ -171,7 +171,7 @@ class Publisher:
     self._record_login()
 
   def _auto_login(self, cookies: list):
-    # TODO: 自动登陆
+    # TODO: 莫倪：自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
     pass
 
   @abstractmethod
@@ -208,7 +208,7 @@ class Publisher:
 
     publication = self._upload_publication(output, url)
 
-    self.add_count()
+    self._add_count()
 
     print("End publish %s: %d/%d -> %s" % (
       self.name(), self.pub_count(), self.gen_count(), publication

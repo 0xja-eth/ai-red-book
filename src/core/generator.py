@@ -15,17 +15,13 @@ from dataclasses import dataclass
 
 INPUT_ROOT = config_loader.file("./input")
 OUTPUT_ROOT = config_loader.file("./output")
-PROMPT_FILE = config_loader.file("./prompt.json")
+
+TITLE_PROMPT_FILE = "./title_prompt.txt"
+CONTENT_PROMPT_FILE = "./content_prompt.txt"
 
 class GenerateType(Enum):
   Article = "article"
   Video = "video"
-
-@dataclass_json
-@dataclass
-class Prompts:
-  title: str
-  content: str
 
 @dataclass_json
 @dataclass
@@ -42,8 +38,14 @@ class Generator:
 
   generate_type: GenerateType
 
+  title_prompt: str
+  content_prompt: str
+
   def __init__(self, generate_type):
     self.generate_type = generate_type
+
+    self.title_prompt = None
+    self.content_prompt = None
 
     if "generate" not in initial_state: initial_state["generate"] = {}
     initial_state["generate"][self.name()] = []
@@ -63,10 +65,10 @@ class Generator:
 
   # region State
 
-  def generation_ids(self) -> list: return get_state("generate", self.name())
+  def generation_ids(self) -> list: return get_state("generate", self.name(), default=[])
   def gen_count(self): return len(self.generation_ids())
 
-  def _add_generation_id(self, id):
+  def _add_count(self, id):
     generation_ids = self.generation_ids()
     generation_ids.append(id)
     set_state(generation_ids, "generate", self.name())
@@ -75,13 +77,15 @@ class Generator:
 
   # region Input
 
-  _prompts: Prompts
+  def get_prompts(self) -> (str, str):
+    if self.title_prompt is None:
+      with open(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE), "r", encoding="utf8") as file:
+        self.title_prompt = file.read()
+    if self.content_prompt is None:
+      with open(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE), "r", encoding="utf8") as file:
+        self.content_prompt = file.read()
 
-  def prompts(self) -> Prompts:
-    if self._prompts is None:
-      with open(os.path.join(INPUT_ROOT, PROMPT_FILE), encoding="utf8") as file:
-        self._prompts = Prompts(**json.load(file))
-    return self._prompts
+    return self.title_prompt, self.content_prompt
 
   # endregion
 
@@ -120,19 +124,18 @@ class Generator:
     generation = self._upload_generation(title_prompt, content_prompt, title, content, urls)
 
     self._save_generation(generation)
-    self._add_generation_id(generation.id)
+    self._add_count(generation.id)
 
     print("End generate %s: %d/%d -> %s" % (
       self.name(), self.generating_count, self.max_count(), generation
     ))
 
   def _generate_title_content(self):
-    prompts = self.prompts()
-
-    title_prompt, content_prompt = prompts.title, prompts.content
-
+    title_prompt, content_prompt = self.get_prompts()
     title = openai_utils.generate_completion(title_prompt)
-    content = openai_utils.generate_completion(content_prompt % title)
+
+    content_prompt_with_title = content_prompt.replace("%s", title)
+    content = openai_utils.generate_completion(content_prompt_with_title)
 
     return title_prompt, content_prompt, title, content
 

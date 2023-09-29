@@ -12,7 +12,8 @@ initial_state: dict = {}
 def init_state():
   global state
   if os.path.exists(STATE_FILE):
-    with open(STATE_FILE, "r", encoding="utf8") as file: state = json.load(file)
+    with open(STATE_FILE, "r", encoding="utf8") as file:
+      state = json.load(file)
   else:
     state = initial_state
     save_state()
@@ -20,13 +21,13 @@ def init_state():
 def save_state():
   with open(STATE_FILE, "w", encoding="utf8") as file: json.dump(state, file)
 
-def get_state(*keys):
+def get_state(*keys, default=None):
   if state is None: init_state()
   if len(keys) <= 0: return state
 
   tmp_state = state
   for key in keys:
-    if key not in tmp_state: return None
+    if key not in tmp_state: return default
     tmp_state = tmp_state[key]
   return tmp_state
 

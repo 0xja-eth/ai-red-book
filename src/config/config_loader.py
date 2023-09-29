@@ -8,7 +8,7 @@ def file(path): return os.path.join(WORK_DIR, path)
 
 # 读取配置文件
 config = configparser.ConfigParser()
-config.read(file('/config.ini'))
+config.read(file('./config.ini'))
 
 def get(section, key, type = None):
   if type == "int": return get_int(section, key)
