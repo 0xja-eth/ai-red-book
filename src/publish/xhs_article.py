@@ -1,23 +1,11 @@
-import json
-import src.core.publishBase as pb
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 
-import shutil
-
 import time
-import os
-import configparser
-import re
 
 from src.core.generator import GenerateType, Generation
 from src.core.publisher import Publisher, Platform
-from src.publish.AutoLogin import AutoLogin
 
 # driver: webdriver.Chrome
 # wait: WebDriverWait
@@ -200,15 +188,15 @@ class XHSArticlePublisher(Publisher):
     elem = self.driver.find_element(By.XPATH, login_ui_path)
     elem.click()
 
-    # TODO: 莫倪：获取Cookies并返回
+    # TODO: [莫倪] 获取Cookies并返回
     return []
 
   def _get_user_name(self) -> str:
-    # TODO: 莫倪：获取用户名
+    # TODO: [莫倪] 获取用户名
     pass
 
   def _get_user_stat(self) -> dict:
-    # TODO: 莫倪：获取用户统计数据
+    # TODO: [莫倪] 获取用户统计数据
     pass
 
   def _do_publish(self, output: Generation) -> str:
@@ -249,7 +237,7 @@ class XHSArticlePublisher(Publisher):
 
     title_text, content_text = output.title, output.content
 
-    content_tags = pb.extract_content_tags(content_text.replace("\n", "<br/>"))
+    content_tags = self.extract_content_tags(content_text.replace("\n", "<br/>"))
 
     JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
@@ -289,7 +277,7 @@ class XHSArticlePublisher(Publisher):
     p = self.driver.find_element(By.XPATH, p_path)
     p.click()
 
-    # TODO: 莫倪：获取发布后的URL并返回
+    # TODO: [莫倪] 获取发布后的URL并返回
     return ""
 
 publisher = XHSArticlePublisher()

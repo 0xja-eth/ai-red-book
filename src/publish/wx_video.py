@@ -162,3 +162,5 @@ if __name__ == '__main__':
     is_looped = pb.config.get('VPublish', 'is_looped').lower() == "true"
 
     main()
+
+# TODO: [君扬] 根据xhs_article, xhs_video的重构方法，重构wx_video

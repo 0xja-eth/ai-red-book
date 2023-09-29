@@ -171,7 +171,7 @@ class Publisher:
     self._record_login()
 
   def _auto_login(self, cookies: list):
-    # TODO: 莫倪：自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
+    # TODO: [莫倪] 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
     pass
 
   @abstractmethod
@@ -218,7 +218,7 @@ class Publisher:
   def _do_publish(self, output: Generation) -> str: pass
 
   def _upload_publication(self, output: Generation, url: str) -> Publication:
-    # TODO: 构建并上传Publication
+    # TODO: [丰含] 构建并上传Publication
     pass
 
   def multi_publish(self):

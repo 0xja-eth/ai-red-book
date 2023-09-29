@@ -16,3 +16,5 @@ if __name__ == '__main__':
 
     shutil.rmtree(OUTPUT_ROOT)
     os.mkdir(OUTPUT_ROOT)
+
+# TODO: [君扬] 给Generator添加一个clear函数，用于清除生成的文件，该脚本的作用在于调用这个clear函数

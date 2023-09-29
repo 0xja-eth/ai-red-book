@@ -57,3 +57,5 @@ def AutoLogin(driver, wait, platform):
     # 确保登陆成功后（出现发布按钮）保存cookies：
     wait.until(EC.presence_of_element_located((By.XPATH, publish_element)))
     save_cookies(driver, platform)
+
+# TODO: [莫倪] 将这里的内容转移到各个publisher里面，这个文件就可以删掉了

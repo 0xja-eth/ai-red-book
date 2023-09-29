@@ -143,7 +143,7 @@ class Generator:
   def _generate_media(self) -> list: pass
 
   def _upload_generation(self, title_prompt, content_prompt, title, content, urls) -> Generation:
-    # TODO: 构建并上传Generation
+    # TODO: [丰含] 构建并上传Generation
     pass
 
   def multi_generate(self):

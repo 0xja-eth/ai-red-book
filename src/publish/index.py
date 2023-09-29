@@ -8,3 +8,5 @@ PUBLISHERS = {
   ["%s_%s" % (Platform.XHS, GenerateType.Article)]: xhs_article.publisher,
   ["%s_%s" % (Platform.XHS, GenerateType.Video)]: xhs_video.publisher,
 }
+
+# TODO: 在这里补充所有的Publisher
