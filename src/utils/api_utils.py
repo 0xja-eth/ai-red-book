@@ -1,7 +1,7 @@
 from src.core.publisher import Platform
 from src.utils.request_utils import request
 
-def login(name: str, platform: Platform, cookies: dict, stat: dict = None):
+def login(name: str, platform: Platform, cookies: list, stat: dict = None):
   """
   登陆
   :param name: 账号名

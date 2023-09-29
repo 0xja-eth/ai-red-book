@@ -3,8 +3,8 @@ import openai
 
 from src.config import config_loader
 
-openai.api_key = config_loader.get('Generate', 'openai_key')
-openai.api_base = config_loader.get('Generate', 'openai_base')
+openai.api_key = config_loader.get('Common', 'openai_key')
+openai.api_base = config_loader.get('Common', 'openai_base')
 
 base_options = {
   "temperature": 1,
