@@ -13,8 +13,8 @@ from src.core.state_manager import initial_state, get_state, set_state
 from src.utils import openai_utils
 from dataclasses import dataclass
 
-INPUT_ROOT = config_loader.file("./input")
-OUTPUT_ROOT = config_loader.file("./output")
+INPUT_ROOT = config_loader.file("../../input")
+OUTPUT_ROOT = config_loader.file("../../output")
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"

@@ -3,7 +3,7 @@ import os.path
 
 from src.config import config_loader
 
-STATE_FILE = config_loader.file("./state.json")
+STATE_FILE = config_loader.file("../../state.json")
 
 state = None
 
