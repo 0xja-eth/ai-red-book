@@ -225,13 +225,13 @@ class XHSArticlePublisher(Publisher):
     # upload_all.send_keys(base_photo1)
     # 判断图片上传成功
     while True:
-        time.sleep(2)
-        try:
-            uploading = 'mask.uploading'
-            self.driver.find_element(By.CLASS_NAME, uploading)
-            print("Picture is still uploading...")
-        except Exception as e:
-            break
+      time.sleep(2)
+      try:
+        uploading = 'mask.uploading'
+        self.driver.find_element(By.CLASS_NAME, uploading)
+        print("Picture is still uploading...")
+      except Exception as e:
+          break
 
     print("Picture uploaded!")
 
@@ -253,22 +253,22 @@ class XHSArticlePublisher(Publisher):
     time.sleep(3)
 
     for content_tag in content_tags:
-        content_path = '//*[@id="post-textarea"]'
-        content_elm = self.driver.find_element(By.XPATH, content_path)
+      content_path = '//*[@id="post-textarea"]'
+      content_elm = self.driver.find_element(By.XPATH, content_path)
 
-        if content_tag.startswith("#"):
-            topic_path = 'topicBtn'
-            topic_elm = self.driver.find_element(By.ID, topic_path)
-            topic_elm.click()
+      if content_tag.startswith("#"):
+        topic_path = 'topicBtn'
+        topic_elm = self.driver.find_element(By.ID, topic_path)
+        topic_elm.click()
 
-            content_tag = content_tag[1:]
-            content_elm.send_keys(content_tag)
-            time.sleep(3)
-            content_elm.send_keys(Keys.ENTER)
+        content_tag = content_tag[1:]
+        content_elm.send_keys(content_tag)
+        time.sleep(3)
+        content_elm.send_keys(Keys.ENTER)
 
-        else:
-            # 填写内容信息
-            self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, content_tag, "innerHTML")
+      else:
+        # 填写内容信息
+        self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, content_tag, "innerHTML")
 
     time.sleep(3)
 

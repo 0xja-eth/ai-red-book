@@ -82,7 +82,6 @@ def publish():
     # driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
     # time.sleep(3)
 
-
     # 上传内容
     content_tags = pb.extract_content_tags(content_text.replace("\n", "<br/>"))
 
@@ -148,3 +147,4 @@ if __name__ == '__main__':
     main()
 
 # TODO: [丰含] 根据xhs_article, xhs_video的重构方法，重构dy_video
+

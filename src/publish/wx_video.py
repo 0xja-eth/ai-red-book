@@ -165,7 +165,7 @@ LOGIN_URL = "https://channels.weixin.qq.com/login.html"
 class WXVideoPublisher(Publisher):
 
   def __init__(self):
-    super().__init__(Platform.XHS, GenerateType.Video, LOGIN_URL)
+    super().__init__(Platform.WX, GenerateType.Video, LOGIN_URL)
 
   def _do_login(self) -> list:
     # 扫码登录
@@ -186,88 +186,85 @@ class WXVideoPublisher(Publisher):
     pass
 
   def _do_publish(self, output: Generation) -> str:
-        c_manage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
-        self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, c_manage_path)))
+    c_manage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
+    self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, c_manage_path)))
 
-        time.sleep(3)
+    time.sleep(3)
 
-        publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
-        publish_ele = self.driver.find_element(By.XPATH, publish_path)
-        self.driver.execute_script(self.JS_CLICK, publish_ele)
+    publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
+    publish_ele = self.driver.find_element(By.XPATH, publish_path)
+    self.driver.execute_script(self.JS_CLICK, publish_ele)
 
-        time.sleep(3)
+    time.sleep(3)
 
-        # 设置输入为可见
-        JS_INPUT_VISABLE = """
-        var input = document.querySelector('input');
-        input.style.display = 'block';
-        """
+    # 设置输入为可见
+    JS_INPUT_VISABLE = """
+    var input = document.querySelector('input');
+    input.style.display = 'block';
+    """
 
-        self.driver.execute_script(JS_INPUT_VISABLE)
+    self.driver.execute_script(JS_INPUT_VISABLE)
 
-        p_video_path = 'input'
-        p_video = self.driver.find_element(By.CSS_SELECTOR, p_video_path)
-        p_video.send_keys(self._get_abs_path(output.urls[0]))
+    p_video_path = 'input'
+    p_video = self.driver.find_element(By.CSS_SELECTOR, p_video_path)
+    p_video.send_keys(self._get_abs_path(output.urls[0]))
 
-        time.sleep(1)
+    time.sleep(1)
 
-        # 等待视频上传完成
-        while True:
-            time.sleep(3)
-            try:
-                self.driver.find_element(By.CLASS_NAME, "ant-progress-inner")
-                print("视频还在上传中……")
-            except Exception as e:
-                break
+    # 等待视频上传完成
+    while True:
+      time.sleep(3)
+      try:
+        self.driver.find_element(By.CLASS_NAME, "ant-progress-inner")
+        print("视频还在上传中……")
+      except Exception as e:
+        break
 
-        print("视频上传完成!")
+    print("视频上传完成!")
 
-        title_text, content_text = output.title, output.content
+    title_text, content_text = output.title, output.content
 
-        time.sleep(3)
+    time.sleep(3)
 
-        # TODO 判断是否不显示位置
-        if True:
-            location_path = 'option-item.active'
-            location_none = self.driver.find_element(By.CLASS_NAME, location_path)
-            self.driver.execute_script(self.JS_CLICK, location_none)
+    # TODO 判断是否不显示位置
+    if True:
+      location_path = 'option-item.active'
+      location_none = self.driver.find_element(By.CLASS_NAME, location_path)
+      self.driver.execute_script(self.JS_CLICK, location_none)
 
-        JS_CODE_ADD_TEXT = """
-                console.log("arguments", arguments)
-                var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
-                elm[key] += txt;
-                elm.dispatchEvent(new Event('change'));
-              """
+    JS_CODE_ADD_TEXT = """
+      console.log("arguments", arguments)
+      var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+      elm[key] += txt;
+      elm.dispatchEvent(new Event('change'));
+    """
 
-        # 上传视频描述
-        description_path = "input-editor"
-        description_publish = self.driver.find_element(By.CLASS_NAME, description_path)
-        description_key = "textContent"
+    # 上传视频描述
+    description_path = "input-editor"
+    description_publish = self.driver.find_element(By.CLASS_NAME, description_path)
+    description_key = "textContent"
 
-        self.driver.execute_script(JS_CODE_ADD_TEXT, description_publish, content_text, description_key)
+    self.driver.execute_script(JS_CODE_ADD_TEXT, description_publish, content_text, description_key)
 
-        time.sleep(3)
+    time.sleep(3)
 
-        title_path = 'weui-desktop-form__input'
-        title_publishs = self.driver.find_elements(By.CLASS_NAME, title_path)
+    title_path = 'weui-desktop-form__input'
+    title_publishs = self.driver.find_elements(By.CLASS_NAME, title_path)
 
-        title_publish = title_publishs[3]
+    title_publish = title_publishs[3]
 
-        # driver.execute_script(JS_VIDSABLE, title_publish)
-        # time.sleep(1)
-        # title_publish[1].send_keys(title)
-        self.driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title_text)
+    # driver.execute_script(JS_VIDSABLE, title_publish)
+    # time.sleep(1)
+    # title_publish[1].send_keys(title)
+    self.driver.execute_script(JS_CODE_ADD_TEXT, title_publish, title_text)
 
-        time.sleep(3)
+    time.sleep(3)
 
-        # 发送
-        confirm_path = 'weui-desktop-btn.weui-desktop-btn_primary'
-        confirms = self.driver.find_elements(By.CLASS_NAME, confirm_path)
-        confirm = confirms[7]
-        self.driver.execute_script(self.JS_CLICK, confirm)
-
-
-        print("End publish: %s: %s" % (title_text, content_text))
+    # 发送
+    confirm_path = 'weui-desktop-btn.weui-desktop-btn_primary'
+    confirms = self.driver.find_elements(By.CLASS_NAME, confirm_path)
+    confirm = confirms[7]
+    self.driver.execute_script(self.JS_CLICK, confirm)
 
 publisher = WXVideoPublisher()
 
