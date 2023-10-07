@@ -1,5 +1,5 @@
-
 from PIL import Image
+
 
 # 缩放图片
 def resize_image(image, target_width, target_height):
