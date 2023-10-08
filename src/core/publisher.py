@@ -245,22 +245,14 @@ class Publisher:
         pass
 
     def _upload_publication(self, output: Generation, url: str) -> Publication:
-        # TODO: [丰含] 构建并上传Publication
-        publication = Publication(
-            id=self.pub_count(),
-            platform=self.platform,
-            userId=self.user.id,
-            generationId=output.id,
-            title=output.title,
-            content=output.content,
-            url=url,
-
-            visitCount=0,
-            likeCount=0,
-            commentCount=0
-        )
-
-        api_utils.publish(publication)
+        return api_utils.publish({
+            "platform": self.platform,
+            "userId": self.user.id,
+            "generationId": output.id,
+            "title": output.title,
+            "content": output.content,
+            "url": url
+        })
 
     def multi_publish(self):
         while True:

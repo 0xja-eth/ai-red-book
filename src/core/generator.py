@@ -11,7 +11,7 @@ from dataclasses_json import dataclass_json
 from src.config import config_loader
 from src.config.config_loader import get_int, get
 from src.core.state_manager import initial_state, get_state, set_state
-from src.utils import openai_utils
+from src.utils import openai_utils, api_utils
 from dataclasses import dataclass
 
 from src.utils.api_utils import generate as upload_generation
@@ -49,8 +49,8 @@ class Generator:
     def __init__(self, generate_type):
         self.generate_type = generate_type
 
-        self.title_prompt = None
-        self.content_prompt = None
+        # self.title_prompt = None
+        # self.content_prompt = None
 
         if "generate" not in initial_state: initial_state["generate"] = {}
         initial_state["generate"][self.name()] = []
@@ -86,6 +86,9 @@ class Generator:
         generation_ids = self.generation_ids()
         generation_ids.append(id)
         set_state(generation_ids, "generate", self.name())
+
+    def _clear_count(self):
+        set_state([], "generate", self.name())
 
     # endregion
 
@@ -160,18 +163,14 @@ class Generator:
         pass
 
     def _upload_generation(self, title_prompt, content_prompt, title, content, urls) -> Generation:
-        generation = Generation(
-            id=self.generating_count,
-            type=self.generate_type,
-            titlePrompt=title_prompt,
-            contentPrompt=content_prompt,
-            title=title,
-            content=content,
-            urls=urls
-        )
-        # upload_generation(generation)
-        # TODO: [丰含] 构建并上传Generation
-        pass
+        return api_utils.generate({
+            "type": self.generate_type.value,
+            "titlePrompt": title_prompt,
+            "contentPrompt": content_prompt,
+            "title": title,
+            "content": content,
+            "urls": urls
+        })
 
     def multi_generate(self):
         while self.gen_count() < self.max_count():
@@ -179,17 +178,10 @@ class Generator:
             time.sleep(self.interval())
 
     def clear(self):
-        article_clear_path = '../../output/article'
-        video_clear_path = '../../output/video'
+        if os.path.exists(self.output_dir()):
+            shutil.rmtree(self.output_dir())
+            os.mkdir(self.output_dir())
 
-        if os.path.exists(article_clear_path):
-            shutil.rmtree(article_clear_path)
-            os.mkdir(article_clear_path)
-
-        if os.path.exists(video_clear_path):
-            shutil.rmtree(video_clear_path)
-            os.mkdir(video_clear_path)
-
-        set_state(0, "publish_count", "xhs_video", "dy_video", "wx_video", "xhs_article")
+        self._clear_count()
 
     # endregion
