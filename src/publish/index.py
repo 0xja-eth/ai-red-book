@@ -1,6 +1,6 @@
 
 from src.core.generator import GenerateType
-from src.core.publisher import Platform
+from src.core.platform import Platform
 
 from src.publish import xhs_video, xhs_article, dy_video, wx_video
 

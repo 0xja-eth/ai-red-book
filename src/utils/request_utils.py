@@ -1,3 +1,5 @@
+import os.path
+
 import requests, json
 
 from src.config import config_loader
@@ -16,7 +18,7 @@ class Request:
         self.headers[key] = value
 
     def _request(self, method, route, data):
-        url = "%s/%s" % (self.host, route)
+        url = "%s/%s" % (self.host, route) # os.path.join(self.host, route) # "%s/%s" % (self.host, route)
         print("[request] Start %s %s %s" % (method, url, data))
         response = requests.request(method, url, headers=self.headers, data=json.dumps(data))
         res_json = response.json()

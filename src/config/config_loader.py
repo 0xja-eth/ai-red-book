@@ -1,16 +1,14 @@
 import configparser
 import os
 
-WORK_DIR = "G:\\work1111111111\\red_book\\ai-red-book"
-
-
+WORK_DIR = "../"
 
 def file(path): return os.path.join(WORK_DIR, path)
 
 
 # 读取配置文件
 config = configparser.ConfigParser()
-config.read('../../config.ini')
+config.read(file('./config.ini'))
 
 
 def get(section, key, type=None):

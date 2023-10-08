@@ -3,7 +3,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.core.generator import Generation, GenerateType
-from src.core.publisher import Publisher, Platform
+from src.core.publisher import Publisher
+from src.core.platform import Platform
 
 # import os
 # import shutil

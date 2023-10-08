@@ -83,9 +83,9 @@ class ArticleGenerator(Generator):
 
         for i in range(self.pic_count()):
             if self.pic_count() == 1:
-                output_file = os.path.join(OUTPUT_ROOT, "%d-pic.jpg" % self.generating_count)
+                output_file = os.path.join(self.output_dir(), "%d-pic.jpg" % self.generating_count)
             else:
-                output_file = os.path.join(OUTPUT_ROOT, "%d-pic-%d.jpg" % (self.generating_count, i + 1))
+                output_file = os.path.join(self.output_dir(), "%d-pic-%d.jpg" % (self.generating_count, i + 1))
 
             if self.pic_mode() == "9_pic":
                 output_file = self.generate_9_pic(files, output_file)
@@ -102,4 +102,4 @@ class ArticleGenerator(Generator):
 generator = ArticleGenerator()
 
 if __name__ == '__main__':
-    generator.generate()
+    generator.multi_generate()

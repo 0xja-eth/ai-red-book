@@ -5,7 +5,6 @@ import shutil
 import time
 from abc import abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 
 from dataclasses_json import dataclass_json
 from selenium import webdriver
@@ -13,20 +12,16 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
+from src.core.platform import Platform
+from src.utils import api_utils
 from src.config import config_loader
 from src.config.config_loader import get
 from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
-from src.utils import api_utils
 
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("./cookies/")
-
-class Platform(Enum):
-    XHS = "xhs"
-    DY = "dy"
-    WX = "wx"
 
 @dataclass_json
 @dataclass
@@ -42,12 +37,17 @@ class User:
     collectCount: int
     visitCount: int
 
+    state: str
+
+    createdAt: str
+    updatedAt: str
+
     # def __init__(self, name: str, platform: Platform, cookies: list, stat: dict):
     #   self.name = name
     #   self.platform = platform
     #   self.cookies = cookies
     #
-    #   for key in stat: self[key] = stat[key]
+    #   for key in stat: setattr(self, key, stat[key])
 
     def stat(self):
         return {
@@ -74,6 +74,9 @@ class Publication:
     likeCount: int
     commentCount: int
 
+    createdAt: str
+    updatedAt: str
+
 
 class Publisher:
     driver: webdriver.Chrome
@@ -95,7 +98,7 @@ class Publisher:
 
     def generator(self) -> Generator:
         print(self.generate_type.value)
-        return GENERATORS[self.generate_type.value]
+        return GENERATORS[self.generate_type]
 
     def gen_name(self):
         return self.generator().name()
@@ -122,10 +125,10 @@ class Publisher:
     # region State
 
     def gen_count(self):
-        return get_state("generate", self.gen_name())
+        return self.generator().gen_count()
 
     def pub_count(self):
-        return get_state("publish", self.name())
+        return get_state("publish", self.name(), default=0)
 
     def _add_count(self):
         set_state((self.pub_count() % self.gen_count()) + 1, "publish", self.name())
@@ -182,8 +185,8 @@ class Publisher:
         else:
             cookies = self._do_login()
 
-        self._make_user(cookies)
-        self._record_login()
+        raw_user = self._make_raw_user(cookies)
+        self._record_login(raw_user)
 
     def _auto_login(self, cookies: list):
         # TODO: [莫倪] 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
@@ -193,9 +196,13 @@ class Publisher:
     def _do_login(self) -> list:
         pass
 
-    def _make_user(self, cookies):
-        self.user = User(name=self._get_user_name(), platform=self.platform,
-                         cookies=cookies, **self._get_user_stat())
+    def _make_raw_user(self, cookies):
+        return {
+            "name": self._get_user_name(),
+            "platform": self.platform.value,
+            "cookies": cookies,
+            "stat": self._get_user_stat()
+        }
 
     @abstractmethod
     def _get_user_name(self) -> str:
@@ -205,9 +212,8 @@ class Publisher:
     def _get_user_stat(self) -> dict:
         pass
 
-    def _record_login(self):
-        login_res = api_utils.login(self.user.name, self.user.platform,
-                                    self.user.cookies, self.user.stat())
+    def _record_login(self, raw_user):
+        login_res = api_utils.login(**raw_user)
         self.user = User(**login_res["user"])
 
     # endregion
@@ -242,14 +248,14 @@ class Publisher:
         pass
 
     def _upload_publication(self, output: Generation, url: str) -> Publication:
-        return api_utils.publish({
-            "platform": self.platform,
+        return Publication(**api_utils.publish({
+            "platform": self.platform.value,
             "userId": self.user.id,
             "generationId": output.id,
             "title": output.title,
             "content": output.content,
             "url": url
-        })
+        }))
 
     def multi_publish(self):
         while True:

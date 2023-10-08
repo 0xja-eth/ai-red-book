@@ -1,4 +1,4 @@
-from src.core.publisher import Platform
+from src.core.platform import Platform
 from src.utils.request_utils import request
 
 def login(name: str, platform: Platform, cookies: list, stat: dict = None):
@@ -10,7 +10,7 @@ def login(name: str, platform: Platform, cookies: list, stat: dict = None):
     :param stat: 统计信息
     :return: 用户信息，key（登陆凭证）
     """
-    res = request.post('/api/redbook/login', {
+    res = request.post('api/redbook/login', {
         'name': name, 'platform': platform, 'cookies': cookies, 'stat': stat
     })
     request.set_header('Authorization', res["key"])
@@ -23,7 +23,7 @@ def generate(generation: dict):
     :param generation: 生成内容
     :return: 生成结果
     """
-    return request.post('/api/redbook/generate', {'generation': generation})
+    return request.post('api/redbook/generate', {'generation': generation})
 
 
 def publish(publication: dict):
@@ -32,4 +32,4 @@ def publish(publication: dict):
     :param publication: 发布内容
     :return: 发布结果
     """
-    return request.post('/api/redbook/publish', {'publication': publication})
+    return request.post('api/redbook/publish', {'publication': publication})

@@ -3,7 +3,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.core.generator import Generation, GenerateType
-from src.core.publisher import Publisher, Platform
+from src.core.publisher import Publisher
+from src.core.platform import Platform
 
 # driver: webdriver.Chrome
 # wait: WebDriverWait
@@ -151,6 +152,7 @@ class XHSVideoPublisher(Publisher):
     publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
     # 等待按钮找到
     self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+    time.sleep(1)
 
     # TODO: [莫倪] 获取Cookies并返回
     return self.driver.get_cookies()

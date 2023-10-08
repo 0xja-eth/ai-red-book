@@ -39,6 +39,9 @@ class Generation:
     content: str
     urls: list
 
+    createdAt: str
+    updatedAt: str
+
 
 class Generator:
     generate_type: GenerateType
@@ -49,8 +52,8 @@ class Generator:
     def __init__(self, generate_type):
         self.generate_type = generate_type
 
-        # self.title_prompt = None
-        # self.content_prompt = None
+        self.title_prompt = None
+        self.content_prompt = None
 
         if "generate" not in initial_state: initial_state["generate"] = {}
         initial_state["generate"][self.name()] = []
@@ -112,15 +115,15 @@ class Generator:
         return os.path.join(OUTPUT_ROOT, self.name())
 
     def get_output(self, id) -> Generation | None:
-        file_name = os.path.join(self.output_dir(), "%d.json" % id)
+        file_name = os.path.join(self.output_dir(), "%s.json" % id)
         if not os.path.exists(file_name): return None
         with open(file_name, "r", encoding="utf8") as file:
             return Generation(**json.load(file))
 
     def _save_generation(self, generation: Generation):
-        file_name = os.path.join(self.output_dir(), "%d.json" % generation.id)
+        file_name = os.path.join(self.output_dir(), "%s.json" % generation.id)
         with open(file_name, "w", encoding="utf8") as file:
-            json.dump(generation.to_json(), file)
+            json.dump(generation.to_dict(), file)
 
     # endregion
 
@@ -163,14 +166,14 @@ class Generator:
         pass
 
     def _upload_generation(self, title_prompt, content_prompt, title, content, urls) -> Generation:
-        return api_utils.generate({
+        return Generation(**api_utils.generate({
             "type": self.generate_type.value,
             "titlePrompt": title_prompt,
             "contentPrompt": content_prompt,
             "title": title,
             "content": content,
             "urls": urls
-        })
+        }))
 
     def multi_generate(self):
         while self.gen_count() < self.max_count():

@@ -155,10 +155,14 @@ cython_debug/
 config.ini
 build
 dist
+temp
 *.exe
 *.dll
 *.mp4
 *.zip
+
+input/*
+output/*
 
 #生成的cookies.json文件
 src/publish/*.json
