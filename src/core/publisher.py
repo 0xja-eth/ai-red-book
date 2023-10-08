@@ -20,6 +20,7 @@ from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 from src.utils import api_utils
 
+
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("./cookies/")
 
@@ -190,7 +191,6 @@ class Publisher:
         # TODO: [莫倪] 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
         pass
 
-    #  手动登录并获取cookies
     @abstractmethod
     def _do_login(self) -> list:
         pass
@@ -245,6 +245,21 @@ class Publisher:
 
     def _upload_publication(self, output: Generation, url: str) -> Publication:
         # TODO: [丰含] 构建并上传Publication
+        publication = Publication(
+            id=self.pub_count(),
+            platform=self.platform,
+            userId=self.user.id,
+            generationId=output.id,
+            title=output.title,
+            content=output.content,
+            url=url,
+
+            visitCount=0,
+            likeCount=0,
+            commentCount=0
+        )
+
+        api_utils.publish(publication)
         pass
 
     def multi_publish(self):

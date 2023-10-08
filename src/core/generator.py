@@ -13,142 +13,169 @@ from src.core.state_manager import initial_state, get_state, set_state
 from src.utils import openai_utils
 from dataclasses import dataclass
 
+from src.utils.api_utils import generate as upload_generation
+
 INPUT_ROOT = config_loader.file("./input")
 OUTPUT_ROOT = config_loader.file("./output")
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
 
+
 class GenerateType(Enum):
-  Article = "article"
-  Video = "video"
+    Article = "article"
+    Video = "video"
+
 
 @dataclass_json
 @dataclass
 class Generation:
-  id: str
-  type: GenerateType
-  titlePrompt: str
-  contentPrompt: str
-  title: str
-  content: str
-  urls: list
+    id: str
+    type: GenerateType
+    titlePrompt: str
+    contentPrompt: str
+    title: str
+    content: str
+    urls: list
+
 
 class Generator:
+    generate_type: GenerateType
 
-  generate_type: GenerateType
+    title_prompt: str
+    content_prompt: str
 
-  title_prompt: str
-  content_prompt: str
+    def __init__(self, generate_type):
+        self.generate_type = generate_type
 
-  def __init__(self, generate_type):
-    self.generate_type = generate_type
+        self.title_prompt = None
+        self.content_prompt = None
 
-    self.title_prompt = None
-    self.content_prompt = None
+        if "generate" not in initial_state: initial_state["generate"] = {}
+        initial_state["generate"][self.name()] = []
 
-    if "generate" not in initial_state: initial_state["generate"] = {}
-    initial_state["generate"][self.name()] = []
+    def name(self):
+        return self.generate_type.value
 
-  def name(self): return self.generate_type.value
+    # region Config
 
-  # region Config
+    def section_name(self):
+        return "Generate %s" % self.generate_type.name
 
-  def section_name(self): return "Generate %s" % self.generate_type.name
+    def load_config(self, key, type):
+        return get(self.section_name(), key, type)
 
-  def load_config(self, key, type): return get(self.section_name(), key, type)
+    def interval(self):
+        return self.load_config("interval", "int")
 
-  def interval(self): return self.load_config("interval", "int")
-  def max_count(self): return self.load_config("max_count", "int")
+    def max_count(self):
+        return self.load_config("max_count", "int")
 
-  # endregion
+    # endregion
 
-  # region State
+    # region State
 
-  def generation_ids(self) -> list: return get_state("generate", self.name(), default=[])
-  def gen_count(self): return len(self.generation_ids())
+    def generation_ids(self) -> list:
+        return get_state("generate", self.name(), default=[])
 
-  def _add_count(self, id):
-    generation_ids = self.generation_ids()
-    generation_ids.append(id)
-    set_state(generation_ids, "generate", self.name())
+    def gen_count(self):
+        return len(self.generation_ids())
 
-  # endregion
+    def _add_count(self, id):
+        generation_ids = self.generation_ids()
+        generation_ids.append(id)
+        set_state(generation_ids, "generate", self.name())
 
-  # region Input
+    # endregion
 
-  def get_prompts(self) -> (str, str):
-    if self.title_prompt is None:
-      with open(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE), "r", encoding="utf8") as file:
-        self.title_prompt = file.read()
-    if self.content_prompt is None:
-      with open(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE), "r", encoding="utf8") as file:
-        self.content_prompt = file.read()
+    # region Input
 
-    return self.title_prompt, self.content_prompt
+    def get_prompts(self) -> (str, str):
+        if self.title_prompt is None:
+            with open(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE), "r", encoding="utf8") as file:
+                self.title_prompt = file.read()
+        if self.content_prompt is None:
+            with open(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE), "r", encoding="utf8") as file:
+                self.content_prompt = file.read()
 
-  # endregion
+        return self.title_prompt, self.content_prompt
 
-  # region Output
+    # endregion
 
-  def output_dir(self): return os.path.join(OUTPUT_ROOT, self.name())
+    # region Output
 
-  def get_output(self, id) -> Generation | None:
-    file_name = os.path.join(self.output_dir(), "%d.json" % id)
-    if not os.path.exists(file_name): return None
-    with open(file_name, "r", encoding="utf8") as file:
-      return Generation(**json.load(file))
+    def output_dir(self):
+        return os.path.join(OUTPUT_ROOT, self.name())
 
-  def _save_generation(self, generation: Generation):
-    file_name = os.path.join(self.output_dir(), "%d.json" % generation.id)
-    with open(file_name, "w", encoding="utf8") as file:
-      json.dump(generation.to_json(), file)
+    def get_output(self, id) -> Generation | None:
+        file_name = os.path.join(self.output_dir(), "%d.json" % id)
+        if not os.path.exists(file_name): return None
+        with open(file_name, "r", encoding="utf8") as file:
+            return Generation(**json.load(file))
 
-  # endregion
+    def _save_generation(self, generation: Generation):
+        file_name = os.path.join(self.output_dir(), "%d.json" % generation.id)
+        with open(file_name, "w", encoding="utf8") as file:
+            json.dump(generation.to_json(), file)
 
-  # region Generate
+    # endregion
 
-  generating_count: int
-  def generate(self):
-    if self.gen_count() >= self.max_count(): return True
+    # region Generate
 
-    self.generating_count = self.gen_count() + 1
+    generating_count: int
 
-    print("Start generate %s: %d/%d" % (
-      self.name(), self.generating_count, self.max_count()
-    ))
+    def generate(self):
+        if self.gen_count() >= self.max_count(): return True
 
-    title_prompt, content_prompt, title, content = self._generate_title_content()
-    urls = self._generate_media()
+        self.generating_count = self.gen_count() + 1
 
-    generation = self._upload_generation(title_prompt, content_prompt, title, content, urls)
+        print("Start generate %s: %d/%d" % (
+            self.name(), self.generating_count, self.max_count()
+        ))
 
-    self._save_generation(generation)
-    self._add_count(generation.id)
+        title_prompt, content_prompt, title, content = self._generate_title_content()
+        urls = self._generate_media()
 
-    print("End generate %s: %d/%d -> %s" % (
-      self.name(), self.generating_count, self.max_count(), generation
-    ))
+        generation = self._upload_generation(title_prompt, content_prompt, title, content, urls)
 
-  def _generate_title_content(self):
-    title_prompt, content_prompt = self.get_prompts()
-    title = openai_utils.generate_completion(title_prompt)
+        self._save_generation(generation)
+        self._add_count(generation.id)
 
-    content_prompt_with_title = content_prompt.replace("%s", title)
-    content = openai_utils.generate_completion(content_prompt_with_title)
+        print("End generate %s: %d/%d -> %s" % (
+            self.name(), self.generating_count, self.max_count(), generation
+        ))
 
-    return title_prompt, content_prompt, title, content
+    def _generate_title_content(self):
+        title_prompt, content_prompt = self.get_prompts()
+        title = openai_utils.generate_completion(title_prompt)
 
-  @abstractmethod
-  def _generate_media(self) -> list: pass
+        content_prompt_with_title = content_prompt.replace("%s", title)
+        content = openai_utils.generate_completion(content_prompt_with_title)
 
-  def _upload_generation(self, title_prompt, content_prompt, title, content, urls) -> Generation:
-    # TODO: [丰含] 构建并上传Generation
-    pass
+        return title_prompt, content_prompt, title, content
 
-  def multi_generate(self):
-    while self.gen_count() < self.max_count():
-        self.generate()
-        time.sleep(self.interval())
+    @abstractmethod
+    def _generate_media(self) -> list:
+        pass
 
-  # endregion
+    def _upload_generation(self, title_prompt, content_prompt, title, content, urls) -> Generation:
+        generation = Generation(
+            id=self.generating_count,
+            type=self.generate_type,
+            titlePrompt=title_prompt,
+            contentPrompt=content_prompt,
+            title=title,
+            content=content,
+            urls=urls
+        )
+        # upload_generation(generation)
+
+        return generation
+        # TODO: [丰含] 构建并上传Generation
+
+    def multi_generate(self):
+        while self.gen_count() < self.max_count():
+            self.generate()
+            time.sleep(self.interval())
+
+    # endregion
