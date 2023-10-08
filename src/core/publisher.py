@@ -5,7 +5,7 @@ import shutil
 import time
 from abc import abstractmethod
 from dataclasses import dataclass
-from enum import Enum
+
 
 from dataclasses_json import dataclass_json
 from selenium import webdriver
@@ -19,16 +19,16 @@ from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 from src.utils import api_utils
-
+from src.utils.api_utils import Platform
 
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("./cookies/")
 
 
-class Platform(Enum):
-    XHS = "xhs"
-    DY = "dy"
-    WX = "wx"
+# class Platform(Enum):
+#     XHS = "xhs"
+#     DY = "dy"
+#     WX = "wx"
 
 
 @dataclass_json
@@ -81,23 +81,23 @@ class Publication:
 class Publisher:
     driver: webdriver.Chrome
     wait: WebDriverWait
-
     platform: Platform
     generate_type: GenerateType
-
     login_url: str
-
     user: User
-
     def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
         self.platform = platform
         self.generate_type = generate_type
         self.login_url = login_url
 
+        self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH))
+        self.wait = WebDriverWait(self.driver, 120)
+
         if "publish" not in initial_state: initial_state["publish"] = {}
         initial_state["publish"][self.name()] = 0
 
     def generator(self) -> Generator:
+        print(self.generate_type.value)
         return GENERATORS[self.generate_type.value]
 
     def gen_name(self):

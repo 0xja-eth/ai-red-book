@@ -178,17 +178,14 @@ LOGIN_URL = "https://creator.xiaohongshu.com/publish/publish?source=official"
 
 
 class XHSArticlePublisher(Publisher):
-
     def __init__(self):
         super().__init__(Platform.XHS, GenerateType.Article, LOGIN_URL)
-
     def _do_login(self) -> list:
         # 扫码登录
         login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
-        elem = self.driver.find_element(By.XPATH, login_ui_path)
+        super().wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
+        elem = super().driver.find_element(By.XPATH, login_ui_path)
         elem.click()
-
         # 获取Cookies并返回
         super().wait.until(
             EC.presence_of_element_located((By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[1]/a')))
@@ -323,7 +320,8 @@ class XHSArticlePublisher(Publisher):
         return ""
 
 
-publisher = XHSArticlePublisher()
 
 if __name__ == '__main__':
+    publisher = XHSArticlePublisher()
+    print("Start login...")
     publisher._do_login()

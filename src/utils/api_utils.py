@@ -1,5 +1,11 @@
-from src.core.publisher import Platform
+from enum import Enum
 from src.utils.request_utils import request
+
+
+class Platform(Enum):
+    XHS = "xhs"
+    DY = "dy"
+    WX = "wx"
 
 
 def login(name: str, platform: Platform, cookies: list, stat: dict = None):
