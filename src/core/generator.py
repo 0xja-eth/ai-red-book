@@ -14,8 +14,10 @@ from src.core.state_manager import initial_state, get_state, set_state
 from src.utils import openai_utils
 from dataclasses import dataclass
 
-INPUT_ROOT = config_loader.file("../../input")
-OUTPUT_ROOT = config_loader.file("../../output")
+from src.utils.api_utils import generate as upload_generation
+
+INPUT_ROOT = config_loader.file("./input")
+OUTPUT_ROOT = config_loader.file("./output")
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
@@ -158,6 +160,16 @@ class Generator:
         pass
 
     def _upload_generation(self, title_prompt, content_prompt, title, content, urls) -> Generation:
+        generation = Generation(
+            id=self.generating_count,
+            type=self.generate_type,
+            titlePrompt=title_prompt,
+            contentPrompt=content_prompt,
+            title=title,
+            content=content,
+            urls=urls
+        )
+        # upload_generation(generation)
         # TODO: [丰含] 构建并上传Generation
         pass
 

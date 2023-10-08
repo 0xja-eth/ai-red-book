@@ -22,9 +22,9 @@ from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 from src.utils import api_utils
 
+
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("./cookies/")
-
 
 # class Platform(Enum):
 #   XHS = "xhs"
@@ -219,9 +219,9 @@ class Publisher:
 
     def publish(self):
         """
-    发布一条内容
-    :return: True if need to break, False if continue next one, None if all success
-    """
+        发布一条内容
+        :return: True if need to break, False if continue next one, None if all success
+        """
         if self.pub_count() >= self.gen_count() and not self.is_looped(): return True
 
         print("Start publish %s: %d/%d" % (self.name(), self.pub_count() + 1, self.gen_count()))
@@ -246,7 +246,21 @@ class Publisher:
 
     def _upload_publication(self, output: Generation, url: str) -> Publication:
         # TODO: [丰含] 构建并上传Publication
-        pass
+        publication = Publication(
+            id=self.pub_count(),
+            platform=self.platform,
+            userId=self.user.id,
+            generationId=output.id,
+            title=output.title,
+            content=output.content,
+            url=url,
+
+            visitCount=0,
+            likeCount=0,
+            commentCount=0
+        )
+
+        api_utils.publish(publication)
 
     def multi_publish(self):
         while True:
