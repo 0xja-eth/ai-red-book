@@ -1,4 +1,4 @@
-from src.core.platform import Platform
+from src.core.publisher import Platform
 from src.utils.request_utils import request
 
 def login(name: str, platform: Platform, cookies: list, stat: dict = None):

@@ -183,54 +183,51 @@ class XHSArticlePublisher(Publisher):
     def _do_login(self) -> list:
         # 扫码登录
         login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
-        super().wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
-        elem = super().driver.find_element(By.XPATH, login_ui_path)
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
+        elem = self.driver.find_element(By.XPATH, login_ui_path)
         elem.click()
 
-    	# 确定为已登陆状态
-    	# 首先先找到发布笔记，然后点击
-    	publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
-    	# 等待按钮找到
-    	self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
-
-		time.sleep(3)
+        # 确定为已登陆状态
+        # 首先先找到发布笔记，然后点击
+        publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
+        # 等待按钮找到
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
 
         # 获取Cookies并返回
-        # super().wait.until(
-        #    EC.presence_of_element_located((By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[1]/a')))
-        return super().driver.get_cookies()
+        return self.driver.get_cookies()
 
     def _get_user_name(self) -> str:
         # 获取用户名
-        uid_element = super().driver.find_element(By.XPATH, '//*[@id="header-area"]/div/div/div[2]/div/span')
+        uid_element = self.driver.find_element(By.XPATH, '//*[@id="header-area"]/div/div/div[2]/div/span')
         return uid_element.text
 
     def _get_user_stat(self) -> dict:
         # 获取用户统计数据
         user_dict = {}
         # 获取关注数
-        following_count_element = super().driver.find_element(By.XPATH,
+        following_count_element = self.driver.find_element(By.XPATH,
                                                               '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
         following_count = int(following_count_element.text)
         user_dict['followingCount'] = following_count
 
         # 获取粉丝数
-        follower_count_element = super().driver.find_element(By.XPATH,
+        follower_count_element = self.driver.find_element(By.XPATH,
                                                              '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[2]/label')
         follower_count = int(follower_count_element.text)
         user_dict['followerCount'] = follower_count
 
         # 打开数据看板
-        next_click = super().driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]')
+        next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]')
         next_click.click()
         # 打开笔记数据
-        next_click = super().driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[4]')
+        next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[4]')
         next_click.click()
         # 遍历笔记
-        notes = super().driver.find_elements(By.XPATH, '//*[@id="app"]/div/div/div[3]/div')
+        notes = self.driver.find_elements(By.XPATH, '//*[@id="app"]/div/div/div[3]/div')
         total_visit = 0
         total_like = 0
         total_collect = 0
+
         for note in notes:
             # li[1]观看量 li[2]点赞量 li[3]收藏量
             visit_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[1]')
@@ -285,7 +282,7 @@ class XHSArticlePublisher(Publisher):
 
         title_text, content_text = output.title, output.content
 
-        content_tags = self.extract_content_tags(content_text.replace("\n", "<br/>"))
+        content_tags = self._extract_content_tags(self._n2br(content_text))
 
         JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
@@ -329,8 +326,9 @@ class XHSArticlePublisher(Publisher):
         return ""
 
 
-
 if __name__ == '__main__':
     publisher = XHSArticlePublisher()
-    print("Start login...")
-    publisher._do_login()
+
+    publisher.init_driver()
+    publisher.login()
+    publisher.multi_publish()

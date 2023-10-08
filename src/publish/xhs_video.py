@@ -152,18 +152,56 @@ class XHSVideoPublisher(Publisher):
     # 等待按钮找到
     self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
 
-    time.sleep(3)
-
     # TODO: [莫倪] 获取Cookies并返回
-    return []
+    return self.driver.get_cookies()
 
   def _get_user_name(self) -> str:
-    # TODO: [莫倪] 获取用户名
-    pass
+    # 获取用户名
+    uid_element = self.driver.find_element(By.XPATH, '//*[@id="header-area"]/div/div/div[2]/div/span')
+    return uid_element.text
 
   def _get_user_stat(self) -> dict:
-    # TODO: [莫倪] 获取用户统计数据
-    pass
+    # 获取用户统计数据
+    user_dict = {}
+    # 获取关注数
+    following_count_element = self.driver.find_element(By.XPATH,
+                                                          '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
+    following_count = int(following_count_element.text)
+    user_dict['followingCount'] = following_count
+
+    # 获取粉丝数
+    follower_count_element = self.driver.find_element(By.XPATH,
+                                                         '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[2]/label')
+    follower_count = int(follower_count_element.text)
+    user_dict['followerCount'] = follower_count
+
+    # 打开数据看板
+    next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]')
+    next_click.click()
+    # 打开笔记数据
+    next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[4]')
+    next_click.click()
+    # 遍历笔记
+    notes = self.driver.find_elements(By.XPATH, '//*[@id="app"]/div/div/div[3]/div')
+    total_visit = 0
+    total_like = 0
+    total_collect = 0
+
+    for note in notes:
+        # li[1]观看量 li[2]点赞量 li[3]收藏量
+        visit_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[1]')
+        total_visit = total_visit + int(visit_count.text)
+
+        like_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[2]')
+        total_like = total_like + int(like_count.text)
+
+        collect_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[3]')
+        total_collect = total_collect + int(collect_count.text)
+
+    user_dict['likeCount'] = total_like
+    user_dict['collectCount'] = total_collect
+    user_dict['visitCount'] = total_visit
+    return user_dict
 
   def _do_publish(self, output: Generation) -> str:
 
@@ -209,8 +247,7 @@ class XHSVideoPublisher(Publisher):
     # 上传内容
     content_path = "post-content"
     content_elm = self.driver.find_element(By.CLASS_NAME, content_path)
-    self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
-                               content_text.replace("\n", "<br/>"), "innerHTML")
+    self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, self._n2br(content_text), "innerHTML")
     time.sleep(3)
 
     # 上传

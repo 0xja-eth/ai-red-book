@@ -5,14 +5,13 @@ import shutil
 import time
 from abc import abstractmethod
 from dataclasses import dataclass
-
+from enum import Enum
 
 from dataclasses_json import dataclass_json
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from src.core.platform import Platform
 
 from src.config import config_loader
 from src.config.config_loader import get
@@ -20,15 +19,14 @@ from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 from src.utils import api_utils
-from src.utils.api_utils import Platform
 
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("./cookies/")
 
-# class Platform(Enum):
-#   XHS = "xhs"
-#   DY = "dy"
-#   WX = "wx"
+class Platform(Enum):
+    XHS = "xhs"
+    DY = "dy"
+    WX = "wx"
 
 @dataclass_json
 @dataclass
@@ -274,7 +272,7 @@ class Publisher:
         return os.path.abspath(os.path.join(OUTPUT_ROOT, file_name))
 
     @staticmethod
-    def _br_ize(text):
+    def _n2br(text):
         return text.replace("\n", "<br/>")
 
     @staticmethod
@@ -291,3 +289,4 @@ class Publisher:
         return result
 
     # endregion
+

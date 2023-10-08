@@ -3,8 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.core.generator import Generation, GenerateType
-from src.core.publisher import Publisher
-from src.core.platform import Platform
+from src.core.publisher import Publisher, Platform
 
 # import os
 # import shutil
@@ -177,10 +176,8 @@ class WXVideoPublisher(Publisher):
     c_manage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
     self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, c_manage_path)))
 
-    time.sleep(3)
-
     # TODO: [莫倪] 获取Cookies并返回
-    return []
+    return self.driver.get_cookies()
 
   def _get_user_name(self) -> str:
     # TODO: [莫倪] 获取用户名

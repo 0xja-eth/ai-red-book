@@ -139,7 +139,6 @@ from src.core.publisher import Publisher, Platform
 
 LOGIN_URL = "https://creator.douyin.com/"
 
-
 class DYVideoPublisher(Publisher):
     def __init__(self):
         super().__init__(Platform.DY, GenerateType.Video, LOGIN_URL)
@@ -151,8 +150,14 @@ class DYVideoPublisher(Publisher):
         elem = self.driver.find_element(By.XPATH, login_ui_path)
         elem.click()
 
+        # 确定为已登录状态
+        # 首先找到发布笔记，然后点击
+        publish_path = '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div[1]/button'
+        # 等待按钮找到
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+
         # 返回cookies
-        return []
+        return self.driver.get_cookies()
 
     def _get_user_name(self) -> str:
         pass
@@ -161,7 +166,6 @@ class DYVideoPublisher(Publisher):
         pass
 
     def _do_publish(self, output: Generation) -> str:
-
         # 确定为已登录状态
         # 首先找到发布笔记，然后点击
         publish_path = '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div[1]/button'
@@ -169,6 +173,7 @@ class DYVideoPublisher(Publisher):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
         publish = self.driver.find_element(By.XPATH, publish_path)
         publish.click()
+
         time.sleep(3)
 
         # 找到抖音上传视频的按钮
