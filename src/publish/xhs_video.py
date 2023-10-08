@@ -152,9 +152,8 @@ class XHSVideoPublisher(Publisher):
     publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
     # 等待按钮找到
     self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
-    time.sleep(1)
+    time.sleep(3)
 
-    # TODO: [莫倪] 获取Cookies并返回
     return self.driver.get_cookies()
 
   def _get_user_name(self) -> str:
@@ -166,8 +165,8 @@ class XHSVideoPublisher(Publisher):
     # 获取用户统计数据
     user_dict = {}
     # 获取关注数
-    following_count_element = self.driver.find_element(By.XPATH,
-                                                          '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
+    following_count_element = self.driver.find_element(
+      By.XPATH, '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
     following_count = int(following_count_element.text)
     user_dict['followingCount'] = following_count
 
@@ -181,7 +180,7 @@ class XHSVideoPublisher(Publisher):
     next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]')
     next_click.click()
     # 打开笔记数据
-    next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[4]')
+    next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[2]')
     next_click.click()
     # 遍历笔记
     notes = self.driver.find_elements(By.XPATH, '//*[@id="app"]/div/div/div[3]/div')

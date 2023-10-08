@@ -207,8 +207,8 @@ class XHSArticlePublisher(Publisher):
         # 获取用户统计数据
         user_dict = {}
         # 获取关注数
-        following_count_element = self.driver.find_element(By.XPATH,
-                                                              '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
+        following_count_element = self.driver.find_element(
+            By.XPATH, '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
         following_count = int(following_count_element.text)
         user_dict['followingCount'] = following_count
 
@@ -327,9 +327,9 @@ class XHSArticlePublisher(Publisher):
         # TODO: [莫倪] 获取发布后的URL并返回
         return ""
 
+publisher = XHSArticlePublisher()
 
 if __name__ == '__main__':
-    publisher = XHSArticlePublisher()
 
     publisher.init_driver()
     publisher.login()

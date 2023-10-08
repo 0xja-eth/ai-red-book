@@ -77,6 +77,8 @@ class Publication:
     createdAt: str
     updatedAt: str
 
+    state: str
+
 
 class Publisher:
     driver: webdriver.Chrome
