@@ -174,6 +174,11 @@ class WXVideoPublisher(Publisher):
     elem = self.driver.find_element(By.XPATH, login_ui_path)
     elem.click()
 
+    c_manage_path = 'weui-desktop-menu__link.weui-desktop-menu__sub__link'
+    self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, c_manage_path)))
+
+    time.sleep(3)
+
     # TODO: [莫倪] 获取Cookies并返回
     return []
 

@@ -146,6 +146,14 @@ class XHSVideoPublisher(Publisher):
     elem = self.driver.find_element(By.XPATH, login_ui_path)
     elem.click()
 
+    # 确定为已登陆状态
+    # 首先先找到发布笔记，然后点击
+    publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
+    # 等待按钮找到
+    self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+
+    time.sleep(3)
+
     # TODO: [莫倪] 获取Cookies并返回
     return []
 
@@ -219,4 +227,6 @@ class XHSVideoPublisher(Publisher):
 publisher = XHSVideoPublisher()
 
 if __name__ == '__main__':
+  publisher.init_driver()
+  publisher.login()
   publisher.multi_publish()

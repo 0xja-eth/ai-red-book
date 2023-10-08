@@ -188,6 +188,14 @@ class XHSArticlePublisher(Publisher):
     elem = self.driver.find_element(By.XPATH, login_ui_path)
     elem.click()
 
+    # 确定为已登陆状态
+    # 首先先找到发布笔记，然后点击
+    publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
+    # 等待按钮找到
+    self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+
+    time.sleep(3)
+
     # TODO: [莫倪] 获取Cookies并返回
     return []
 
@@ -237,7 +245,7 @@ class XHSArticlePublisher(Publisher):
 
     title_text, content_text = output.title, output.content
 
-    content_tags = self.extract_content_tags(content_text.replace("\n", "<br/>"))
+    content_tags = self._extract_content_tags(self._br_ize(content_text))
 
     JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
@@ -283,4 +291,6 @@ class XHSArticlePublisher(Publisher):
 publisher = XHSArticlePublisher()
 
 if __name__ == '__main__':
+  publisher.init_driver()
+  publisher.login()
   publisher.multi_publish()
