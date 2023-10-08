@@ -4,12 +4,13 @@ import os
 WORK_DIR = "G:\\work1111111111\\red_book\\ai-red-book"
 
 
+
 def file(path): return os.path.join(WORK_DIR, path)
 
 
 # 读取配置文件
 config = configparser.ConfigParser()
-config.read(file('./config.ini'))
+config.read('../../config.ini')
 
 
 def get(section, key, type=None):
@@ -30,6 +31,5 @@ def get_bool(section, key): return config.get(section, key).lower() == "true"
 
 
 if __name__ == '__main__':
-
     # Test
     print(os.path.exists(file('/config.ini')))
