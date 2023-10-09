@@ -265,6 +265,4 @@ class XHSVideoPublisher(Publisher):
 publisher = XHSVideoPublisher()
 
 if __name__ == '__main__':
-  publisher.init_driver()
-  publisher.login()
-  publisher.multi_publish()
+  print(publisher.cookies_filename())

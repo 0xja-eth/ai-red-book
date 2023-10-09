@@ -21,7 +21,7 @@ from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
-COOKIES_DIR = config_loader.file("./cookies/")
+COOKIES_DIR = config_loader.file("cookies/")
 
 @dataclass_json
 @dataclass
@@ -140,6 +140,9 @@ class Publisher:
     # region Cookies
 
     def cookies_filename(self):
+        # 是否存在cookies文件夹，不存在则创建
+        if not os.path.exists(COOKIES_DIR):
+            os.makedirs(COOKIES_DIR)
         return os.path.join(COOKIES_DIR, "%s_cookies.json" % self.name())
 
     def has_cookies(self):
@@ -151,6 +154,8 @@ class Publisher:
             return json.load(file)
 
     def _save_cookies(self, cookies: list):
+        with open(self.cookies_filename(), "w", encoding="utf8") as file:
+            file.truncate()
         with open(self.cookies_filename(), "w", encoding="utf8") as file:
             json.dump(cookies, file)
 
@@ -186,12 +191,17 @@ class Publisher:
             self._auto_login(cookies)
         else:
             cookies = self._do_login()
+            self._save_cookies(cookies)
 
-        raw_user = self._make_raw_user(cookies)
-        self._record_login(raw_user)
+        # raw_user = self._make_raw_user(cookies)
+        # self._record_login(raw_user)
 
     def _auto_login(self, cookies: list):
-        # TODO: [莫倪] 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
+        # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
+        self._do_auto_login(cookies)
+
+    @abstractmethod
+    def _do_auto_login(self, cookies: list):
         pass
 
     @abstractmethod

@@ -165,4 +165,4 @@ input/*
 output/*
 
 #生成的cookies.json文件
-src/publish/*.json
+src/cookies

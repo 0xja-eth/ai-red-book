@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 import os
 def load_cookies(platform):
-    cookiesFilename = "./"+platform+"_cookies.json"
+    cookiesFilename = "../cookies/"+platform+"_cookies.json"
     #检测是否存在cookies文件
     if not os.path.exists(cookiesFilename):
         return []

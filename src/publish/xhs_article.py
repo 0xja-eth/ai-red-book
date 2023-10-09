@@ -1,5 +1,6 @@
 import time
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from src.core.generator import GenerateType, Generation
 from src.core.publisher import Publisher
 from src.core.platform import Platform
+from src.publish.AutoLogin import AutoLogin
 
 # driver: webdriver.Chrome
 # wait: WebDriverWait
@@ -175,8 +177,23 @@ from src.core.platform import Platform
 #
 #     main()
 
-LOGIN_URL = "https://creator.xiaohongshu.com/publish/publish?source=official"
+LOGIN_URL = "https://creator.xiaohongshu.com/login"
 
+ELEMENT = {
+    'publish': '//*[@id="content-area"]/main/div[1]/div/div[1]/a',
+    'username': '//*[@id="app"]/div/div[1]/div[1]/div[2]/h4',
+    'followingCount': '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label',
+    'followerCount': '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[2]/label',
+    'likeAndCollectCount': '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[3]/label',
+    'recentVisitCount': '//*[@id="app"]/div/div[1]/div[2]/div[2]/div[3]/span[2]',
+    'dataBoard': '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]',
+    'noteData': '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[4]',
+    'noteManage': '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[2]',
+    'notes': '//*[@id="app"]/div',
+    'likeCount': './div[3]/div[2]/div[2]/div[3]/span',
+    'collectCount': './div[3]/div[2]/div[2]/div[4]/span',
+    'visitCount': './div[3]/div[2]/div[2]/div[1]/span',
+}
 
 class XHSArticlePublisher(Publisher):
     def __init__(self):
@@ -198,9 +215,20 @@ class XHSArticlePublisher(Publisher):
         # 获取Cookies并返回
         return self.driver.get_cookies()
 
+    def _do_auto_login(self, cookies: list):
+        print(LOGIN_URL)
+        self.driver.get(LOGIN_URL)
+        # 将cookies添加到driver中
+        for cookie in cookies:
+            self.driver.add_cookie(cookie)
+        self.driver.refresh()
+        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['publish'])))
+        time.sleep(3)
+        self._save_cookies(self.driver.get_cookies())
+
     def _get_user_name(self) -> str:
         # 获取用户名
-        uid_element = self.driver.find_element(By.XPATH, '//*[@id="header-area"]/div/div/div[2]/div/span')
+        uid_element = self.driver.find_element(By.XPATH, ELEMENT['username'])
         return uid_element.text
 
     def _get_user_stat(self) -> dict:
@@ -208,42 +236,66 @@ class XHSArticlePublisher(Publisher):
         user_dict = {}
         # 获取关注数
         following_count_element = self.driver.find_element(
-            By.XPATH, '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
+            By.XPATH, ELEMENT['followingCount'])
         following_count = int(following_count_element.text)
         user_dict['followingCount'] = following_count
 
         # 获取粉丝数
-        follower_count_element = self.driver.find_element(By.XPATH,
-                                                             '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[2]/label')
+        follower_count_element = self.driver.find_element(By.XPATH, ELEMENT['followerCount'])
         follower_count = int(follower_count_element.text)
         user_dict['followerCount'] = follower_count
 
-        # 打开数据看板
-        next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]')
-        next_click.click()
-        # 打开笔记数据
-        next_click = self.driver.find_element(By.XPATH,  '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[2]')
-        next_click.click()
-        # 遍历笔记
-        notes = self.driver.find_elements(By.XPATH, '//*[@id="app"]/div/div/div[3]/div')
-        total_visit = 0
-        total_like = 0
-        total_collect = 0
+        # 获赞与收藏
+        like_and_collect_element = self.driver.find_element(By.XPATH, ELEMENT['likeAndCollectCount'])
+        like_and_collect = int(like_and_collect_element.text)
+        user_dict['likeCount'] = like_and_collect
+        user_dict['collectCount'] = like_and_collect
 
-        for note in notes:
-            # li[1]观看量 li[2]点赞量 li[3]收藏量
-            visit_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[1]')
-            total_visit = total_visit + int(visit_count.text)
+        # 近七日访客
+        recent_visit_element = self.driver.find_element(By.XPATH, ELEMENT['recentVisitCount'])
+        recent_visit = int(recent_visit_element.text)
+        user_dict['visitCount'] = recent_visit
 
-            like_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[2]')
-            total_like = total_like + int(like_count.text)
-
-            collect_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[3]')
-            total_collect = total_collect + int(collect_count.text)
-
-        user_dict['likeCount'] = total_like
-        user_dict['collectCount'] = total_collect
-        user_dict['visitCount'] = total_visit
+        # # 遍历笔记获取详细的数据
+        # # 打开笔记数据
+        # next_click = self.driver.find_element(By.XPATH,  ELEMENT['noteManage'])
+        # next_click.click()
+        #
+        # index = 3
+        # notes = []
+        # while True:
+        #     baseXPATH = f'//*[@id="app"]/div/div[{index}]'
+        #     try:
+        #         note = self.driver.find_element(By.XPATH, baseXPATH)
+        #         notes.append(note)
+        #         index += 1
+        #     except NoSuchElementException:
+        #         break
+        # total_visit = 0
+        # total_like = 0
+        # total_collect = 0
+        #
+        #
+        # for note in notes:
+        #     print(note)
+        #     visit_count_elements = note.find_elements(By.XPATH, ELEMENT['visitCount'])
+        #     if visit_count_elements:
+        #         visit_count = visit_count_elements[0]
+        #         total_visit += int(visit_count.text)
+        #
+        #     like_count_elements = note.find_elements(By.XPATH, ELEMENT['likeCount'])
+        #     if like_count_elements:
+        #         like_count = like_count_elements[0]
+        #         total_like += int(like_count.text)
+        #
+        #     collect_count_elements = note.find_elements(By.XPATH, ELEMENT['collectCount'])
+        #     if collect_count_elements:
+        #         collect_count = collect_count_elements[0]
+        #         total_collect += int(collect_count.text)
+        #
+        # user_dict['likeCount'] = total_like
+        # user_dict['collectCount'] = total_collect
+        # user_dict['visitCount'] = total_visit
         return user_dict
 
     def _do_publish(self, output: Generation) -> str:
@@ -327,10 +379,11 @@ class XHSArticlePublisher(Publisher):
         # TODO: [莫倪] 获取发布后的URL并返回
         return ""
 
+
 publisher = XHSArticlePublisher()
 
 if __name__ == '__main__':
-
-    publisher.init_driver()
     publisher.login()
-    publisher.multi_publish()
+    print('username',publisher._get_user_name())
+    print(publisher._get_user_stat())
+    publisher.driver.quit()
