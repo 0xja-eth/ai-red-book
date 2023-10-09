@@ -1,10 +1,11 @@
 import time
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.core.generator import Generation, GenerateType
-from src.core.publisher import Publisher
 from src.core.platform import Platform
+from src.core.publisher import Publisher
 
 # driver: webdriver.Chrome
 # wait: WebDriverWait
@@ -132,137 +133,147 @@ from src.core.platform import Platform
 #
 #     main()
 
-LOGIN_URL = "https://creator.xiaohongshu.com/publish/publish?source=official"
+LOGIN_URL = "https://creator.xiaohongshu.com/login"
+
+ELEMENT = {
+    'publish': '//*[@id="content-area"]/main/div[1]/div/div[1]/a',
+    'username': '//*[@id="app"]/div/div[1]/div[1]/div[2]/h4',
+    'followingCount': '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label',
+    'followerCount': '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[2]/label',
+    'likeAndCollectCount': '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[3]/label',
+    'recentVisitCount': '//*[@id="app"]/div/div[1]/div[2]/div[2]/div[3]/span[2]',
+    'dataBoard': '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]',
+    'noteData': '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[4]',
+    'noteManage': '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[2]',
+    'notes': '//*[@id="app"]/div',
+    'likeCount': './div[3]/div[2]/div[2]/div[3]/span',
+    'collectCount': './div[3]/div[2]/div[2]/div[4]/span',
+    'visitCount': './div[3]/div[2]/div[2]/div[1]/span',
+}
 
 
 class XHSVideoPublisher(Publisher):
 
-  def __init__(self):
-    super().__init__(Platform.XHS, GenerateType.Video, LOGIN_URL)
+    def __init__(self):
+        super().__init__(Platform.XHS, GenerateType.Video, LOGIN_URL)
 
-  def _do_login(self) -> list:
-    # 扫码登录
-    login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
-    self.wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
-    elem = self.driver.find_element(By.XPATH, login_ui_path)
-    elem.click()
-
-    # 确定为已登陆状态
-    # 首先先找到发布笔记，然后点击
-    publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
-    # 等待按钮找到
-    self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
-    time.sleep(3)
-
-    return self.driver.get_cookies()
-
-  def _get_user_name(self) -> str:
-    # 获取用户名
-    uid_element = self.driver.find_element(By.XPATH, '//*[@id="header-area"]/div/div/div[2]/div/span')
-    return uid_element.text
-
-  def _get_user_stat(self) -> dict:
-    # 获取用户统计数据
-    user_dict = {}
-    # 获取关注数
-    following_count_element = self.driver.find_element(
-      By.XPATH, '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[1]/label')
-    following_count = int(following_count_element.text)
-    user_dict['followingCount'] = following_count
-
-    # 获取粉丝数
-    follower_count_element = self.driver.find_element(By.XPATH,
-                                                         '//*[@id="app"]/div/div[1]/div[1]/div[2]/p[1]/span[2]/label')
-    follower_count = int(follower_count_element.text)
-    user_dict['followerCount'] = follower_count
-
-    # 打开数据看板
-    next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[3]')
-    next_click.click()
-    # 打开笔记数据
-    next_click = self.driver.find_element(By.XPATH, '//*[@id="content-area"]/main/div[1]/div/div[2]/div/div[2]')
-    next_click.click()
-    # 遍历笔记
-    notes = self.driver.find_elements(By.XPATH, '//*[@id="app"]/div/div/div[3]/div')
-    total_visit = 0
-    total_like = 0
-    total_collect = 0
-
-    for note in notes:
-        # li[1]观看量 li[2]点赞量 li[3]收藏量
-        visit_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[1]')
-        total_visit = total_visit + int(visit_count.text)
-
-        like_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[2]')
-        total_like = total_like + int(like_count.text)
-
-        collect_count = note.find_element(By.XPATH, './div[2]/ul[1]/li[3]')
-        total_collect = total_collect + int(collect_count.text)
-
-    user_dict['likeCount'] = total_like
-    user_dict['collectCount'] = total_collect
-    user_dict['visitCount'] = total_visit
-    return user_dict
-
-  def _do_publish(self, output: Generation) -> str:
-
-    # 确定为已登录状态
-    # 首先找到发布笔记，然后点击
-    publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
-    # 等待按钮找到
-    self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
-    publish = self.driver.find_element(By.XPATH, publish_path)
-    publish.click()
-    time.sleep(3)
-
-    upload_video = self.driver.find_element(By.CLASS_NAME, "upload-input")
-    video_url = self._get_abs_path(output.urls[0])
-    upload_video.send_keys(video_url)
-
-    # 等待视频上传完成
-    while True:
+    def _do_login(self) -> list:
+        # 扫码登录
+        login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
+        elem = self.driver.find_element(By.XPATH, login_ui_path)
+        elem.click()
+        # 确定为已登陆状态
+        # 首先先找到发布笔记，然后点击
+        publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
+        # 等待按钮找到
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
         time.sleep(3)
-        try:
-            self.driver.find_element(By.CLASS_NAME, "reUpload")
-            break
-        except Exception as e:
-            print("Video is still uploading...")
+        # 获取Cookies并返回
+        return self.driver.get_cookies()
 
-    print("Video uploaded!")
+    def _do_auto_login(self, cookies: list):
+        self.driver.get(LOGIN_URL)
+        # 将cookies添加到driver中
+        for cookie in cookies:
+            self.driver.add_cookie(cookie)
+        self.driver.refresh()
+        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['publish'])))
+        time.sleep(3)
+        self._save_cookies(self.driver.get_cookies())
 
-    title_text, content_text = output.title, output.content
+    def _get_user_name(self) -> str:
+        # 获取用户名
+        uid_element = self.driver.find_element(By.XPATH, ELEMENT['username'])
+        return uid_element.text
 
-    JS_CODE_ADD_TEXT = """
-        console.log("arguments", arguments)
-        var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
-        elm[key] += txt;
-        elm.dispatchEvent(new Event('change'));
-    """
+    def _get_user_stat(self) -> dict:
+        # 获取用户统计数据
+        user_dict = {}
+        # 获取关注数
+        following_count_element = self.driver.find_element(
+            By.XPATH, ELEMENT['followingCount'])
+        following_count = int(following_count_element.text)
+        user_dict['followingCount'] = following_count
 
-    # 上传标题
-    title_path = "c-input_inner"
-    title_elm = self.driver.find_element(By.CLASS_NAME, title_path)
-    self.driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
-    time.sleep(3)
+        # 获取粉丝数
+        follower_count_element = self.driver.find_element(By.XPATH, ELEMENT['followerCount'])
+        follower_count = int(follower_count_element.text)
+        user_dict['followerCount'] = follower_count
 
-    # 上传内容
-    content_path = "post-content"
-    content_elm = self.driver.find_element(By.CLASS_NAME, content_path)
-    self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, self._n2br(content_text), "innerHTML")
-    time.sleep(3)
+        # 获赞与收藏
+        like_and_collect_element = self.driver.find_element(By.XPATH, ELEMENT['likeAndCollectCount'])
+        like_and_collect = int(like_and_collect_element.text)
+        user_dict['likeCount'] = like_and_collect
+        user_dict['collectCount'] = like_and_collect
 
-    # 上传
-    # css-k3hpu2.css-osq2ks.dyn.publishBtn.red
-    p_path = 'css-k3hpu2.css-osq2ks.dyn.publishBtn.red'
+        # 近七日访客
+        recent_visit_element = self.driver.find_element(By.XPATH, ELEMENT['recentVisitCount'])
+        recent_visit = int(recent_visit_element.text)
+        user_dict['visitCount'] = recent_visit
+        return user_dict
 
-    self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, p_path)))
-    p = self.driver.find_element(By.CLASS_NAME, p_path)
-    p.click()
+    def _do_publish(self, output: Generation) -> str:
+        # 确定为已登录状态
+        # 首先找到发布笔记，然后点击
+        publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
+        # 等待按钮找到
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+        publish = self.driver.find_element(By.XPATH, publish_path)
+        publish.click()
+        time.sleep(3)
 
-    # TODO: [莫倪] 获取发布后的URL并返回
-    return ""
+        upload_video = self.driver.find_element(By.CLASS_NAME, "upload-input")
+        video_url = self._get_abs_path(output.urls[0])
+        upload_video.send_keys(video_url)
+
+        # 等待视频上传完成
+        while True:
+            time.sleep(3)
+            try:
+                self.driver.find_element(By.CLASS_NAME, "reUpload")
+                break
+            except Exception as e:
+                print("Video is still uploading...")
+
+        print("Video uploaded!")
+
+        title_text, content_text = output.title, output.content
+
+        JS_CODE_ADD_TEXT = """
+          console.log("arguments", arguments)
+          var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+          elm[key] += txt;
+          elm.dispatchEvent(new Event('change'));
+      """
+
+        # 上传标题
+        title_path = "c-input_inner"
+        title_elm = self.driver.find_element(By.CLASS_NAME, title_path)
+        self.driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
+        time.sleep(3)
+
+        # 上传内容
+        content_path = "post-content"
+        content_elm = self.driver.find_element(By.CLASS_NAME, content_path)
+        self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, self._n2br(content_text), "innerHTML")
+        time.sleep(3)
+
+        # 上传
+        # css-k3hpu2.css-osq2ks.dyn.publishBtn.red
+        p_path = 'css-k3hpu2.css-osq2ks.dyn.publishBtn.red'
+
+        self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, p_path)))
+        p = self.driver.find_element(By.CLASS_NAME, p_path)
+        p.click()
+        # TODO: [莫倪] 获取发布后的URL并返回
+        return ""
+
 
 publisher = XHSVideoPublisher()
 
 if __name__ == '__main__':
-  print(publisher.cookies_filename())
+    publisher.login()
+    print('username', publisher._get_user_name())
+    print(publisher._get_user_stat())
+    publisher.driver.quit()

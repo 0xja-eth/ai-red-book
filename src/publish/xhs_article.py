@@ -1,14 +1,12 @@
 import time
 
-from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.core.generator import GenerateType, Generation
-from src.core.publisher import Publisher
 from src.core.platform import Platform
-from src.publish.AutoLogin import AutoLogin
+from src.core.publisher import Publisher
 
 # driver: webdriver.Chrome
 # wait: WebDriverWait
@@ -195,9 +193,11 @@ ELEMENT = {
     'visitCount': './div[3]/div[2]/div[2]/div[1]/span',
 }
 
+
 class XHSArticlePublisher(Publisher):
     def __init__(self):
         super().__init__(Platform.XHS, GenerateType.Article, LOGIN_URL)
+
     def _do_login(self) -> list:
         # 扫码登录
         login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
@@ -216,7 +216,6 @@ class XHSArticlePublisher(Publisher):
         return self.driver.get_cookies()
 
     def _do_auto_login(self, cookies: list):
-        print(LOGIN_URL)
         self.driver.get(LOGIN_URL)
         # 将cookies添加到driver中
         for cookie in cookies:
@@ -235,8 +234,7 @@ class XHSArticlePublisher(Publisher):
         # 获取用户统计数据
         user_dict = {}
         # 获取关注数
-        following_count_element = self.driver.find_element(
-            By.XPATH, ELEMENT['followingCount'])
+        following_count_element = self.driver.find_element(By.XPATH, ELEMENT['followingCount'])
         following_count = int(following_count_element.text)
         user_dict['followingCount'] = following_count
 
@@ -299,7 +297,6 @@ class XHSArticlePublisher(Publisher):
         return user_dict
 
     def _do_publish(self, output: Generation) -> str:
-
         # 确定为已登陆状态
         # 首先先找到发布笔记，然后点击
         publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
@@ -384,6 +381,6 @@ publisher = XHSArticlePublisher()
 
 if __name__ == '__main__':
     publisher.login()
-    print('username',publisher._get_user_name())
+    print('username', publisher._get_user_name())
     print(publisher._get_user_stat())
     publisher.driver.quit()
