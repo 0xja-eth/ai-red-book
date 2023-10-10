@@ -269,9 +269,13 @@ class WXVideoPublisher(Publisher):
     confirm = confirms[7]
     self.driver.execute_script(self.JS_CLICK, confirm)
 
+    # 获取发布后的URL并返回
+    return ""
+
 publisher = WXVideoPublisher()
 
 if __name__ == '__main__':
+  publisher.login()
   publisher.multi_publish()
 
 # TODO: [君扬] 根据xhs_article, xhs_video的重构方法，重构wx_video

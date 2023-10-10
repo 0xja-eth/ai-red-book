@@ -189,92 +189,92 @@ class DYVideoPublisher(Publisher):
     def _get_user_stat(self) -> dict:
         user_dict = {}
         # 获取关注数量
-        followingCount_element = self.driver.find_element(By.XPATH, ELEMENT['followingCount'])
-        follwoingCount = int(followingCount_element.text)
-        user_dict['followingCount'] = follwoingCount
+        following_count_element = self.driver.find_element(By.XPATH, ELEMENT['followingCount'])
+        follwoing_count = int(following_count_element.text)
+        user_dict['followingCount'] = follwoing_count
 
         # 获取粉丝数
-        followerCount_element = self.driver.find_element(By.XPATH, ELEMENT['followerCount'])
-        followerCount = int(followerCount_element.text)
-        user_dict['followerCount'] = followerCount
+        follower_count_element = self.driver.find_element(By.XPATH, ELEMENT['followerCount'])
+        follower_count = int(follower_count_element.text)
+        user_dict['followerCount'] = follower_count
 
         # 获取获赞数
-        likeCount_element = self.driver.find_element(By.XPATH, ELEMENT['likeCount'])
-        likeCount = int(likeCount_element.text)
-        user_dict['likeCount'] = likeCount
+        like_count_element = self.driver.find_element(By.XPATH, ELEMENT['likeCount'])
+        like_count = int(like_count_element.text)
+        user_dict['likeCount'] = like_count
 
         # 获取分享数
-        collectCount_element = self.driver.find_element(By.XPATH, ELEMENT['collectCount'])
-        collectCount = int(collectCount_element.text)
-        user_dict['collectCount'] = collectCount
+        collect_count_element = self.driver.find_element(By.XPATH, ELEMENT['collectCount'])
+        collect_count = int(collect_count_element.text)
+        user_dict['collectCount'] = collect_count
 
         # 获取播放量
-        visitCount_element = self.driver.find_element(By.XPATH, ELEMENT['visitCount'])
-        visitCount = int(visitCount_element.text)
-        user_dict['visitCount'] = visitCount
+        visit_count_element = self.driver.find_element(By.XPATH, ELEMENT['visitCount'])
+        visit_count = int(visit_count_element.text)
+        user_dict['visitCount'] = visit_count
         return user_dict
 
 
-def _do_publish(self, output: Generation) -> str:
-    # 确定为已登录状态
-    # 首先找到发布笔记，然后点击
-    publish_path = '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div[1]/button'
-    # 等待按钮找到
-    self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
-    publish = self.driver.find_element(By.XPATH, publish_path)
-    publish.click()
+    def _do_publish(self, output: Generation) -> str:
+        # 确定为已登录状态
+        # 首先找到发布笔记，然后点击
+        publish_path = '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div[1]/button'
+        # 等待按钮找到
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+        publish = self.driver.find_element(By.XPATH, publish_path)
+        publish.click()
 
-    time.sleep(3)
-
-    # 找到抖音上传视频的按钮
-    upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label'
-    upload_video = self.driver.find_element(By.XPATH, upload_video_path)
-    video_url = self._get_abs_path(output.urls[0])
-    upload_video.send_keys(video_url)
-
-    # 等待视频上传完成
-    while True:
         time.sleep(3)
-        try:
-            reUpload_button_path = '//*[@id="root"]/div/div/div[2]/div[2]/div/div/div[2]/div[4]'
-            self.driver.find_element(By.XPATH, reUpload_button_path)
-            break
-        except Exception as e:
-            print("Video is still uploading...")
 
-    print("Video uploaded!")
+        # 找到抖音上传视频的按钮
+        upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label'
+        upload_video = self.driver.find_element(By.XPATH, upload_video_path)
+        video_url = self._get_abs_path(output.urls[0])
+        upload_video.send_keys(video_url)
 
-    title_text, content_text = output.title, output.content
+        # 等待视频上传完成
+        while True:
+            time.sleep(3)
+            try:
+                reUpload_button_path = '//*[@id="root"]/div/div/div[2]/div[2]/div/div/div[2]/div[4]'
+                self.driver.find_element(By.XPATH, reUpload_button_path)
+                break
+            except Exception as e:
+                print("Video is still uploading...")
 
-    JS_CODE_ADD_TEXT = """
-           console.log("arguments", arguments)
-           var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
-           elm[key] += txt;
-           elm.dispatchEvent(new Event('change'));
-         """
+        print("Video uploaded!")
 
-    # # 抖音似乎没有上传标题
-    # title_path = "c-input_inner"
-    # title_elm = self.driver.find_element(By.CLASS_NAME, title_path)
-    # self.driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
-    # time.sleep(3)
+        title_text, content_text = output.title, output.content
 
-    # 上传描述内容
-    content_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[2]/div/div/div/div[1]/div'
-    content_elm = self.driver.find_element(By.XPATH, content_path)
-    self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
-                               content_text.replace("\n", "<br/>"), "innerHTML")
-    time.sleep(3)
+        JS_CODE_ADD_TEXT = """
+               console.log("arguments", arguments)
+               var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+               elm[key] += txt;
+               elm.dispatchEvent(new Event('change'));
+             """
 
-    # 发布
-    p_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[17]/button[1]'
+        # # 抖音似乎没有上传标题
+        # title_path = "c-input_inner"
+        # title_elm = self.driver.find_element(By.CLASS_NAME, title_path)
+        # self.driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
+        # time.sleep(3)
 
-    self.wait.until(EC.element_to_be_clickable((By.XPATH, p_path)))
-    p = self.driver.find_element(By.XPATH, p_path)
-    p.click()
+        # 上传描述内容
+        content_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[2]/div/div/div/div[1]/div'
+        content_elm = self.driver.find_element(By.XPATH, content_path)
+        self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm,
+                                   content_text.replace("\n", "<br/>"), "innerHTML")
+        time.sleep(3)
 
-    # 获取发布后的URL并返回
-    return ""
+        # 发布
+        p_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[17]/button[1]'
+
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, p_path)))
+        p = self.driver.find_element(By.XPATH, p_path)
+        p.click()
+
+        # 获取发布后的URL并返回
+        return ""
 
 
 # TODO: [丰含] 根据xhs_article, xhs_video的重构方法，重构dy_video
@@ -283,6 +283,4 @@ publisher = DYVideoPublisher()
 
 if __name__ == '__main__':
     publisher.login()
-    print('username', publisher._get_user_name())
-    print(publisher._get_user_stat())
-    publisher.driver.quit()
+    publisher.multi_publish()

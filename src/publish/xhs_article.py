@@ -381,6 +381,4 @@ publisher = XHSArticlePublisher()
 
 if __name__ == '__main__':
     publisher.login()
-    print('username', publisher._get_user_name())
-    print(publisher._get_user_stat())
-    publisher.driver.quit()
+    publisher.multi_publish()
