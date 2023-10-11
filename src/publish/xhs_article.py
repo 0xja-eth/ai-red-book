@@ -206,17 +206,14 @@ class XHSArticlePublisher(Publisher):
         elem.click()
 
         # 确定为已登陆状态
-        # 首先先找到发布笔记，然后点击
-        publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
         # 等待按钮找到
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, ELEMENT['publish'])))
         time.sleep(3)
 
         # 获取Cookies并返回
         return self.driver.get_cookies()
 
     def _do_auto_login(self, cookies: list):
-        self.driver.get(LOGIN_URL)
         # 将cookies添加到driver中
         for cookie in cookies:
             self.driver.add_cookie(cookie)

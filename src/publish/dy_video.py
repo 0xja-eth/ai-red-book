@@ -146,7 +146,7 @@ ELEMENT = {
     'username': '//*[@id="root"]/div/div[1]/div/div/div[2]/div[1]/div[1]/div[1]',
     'followingCount': '//*[@id="root"]/div/div[1]/div/div/div[2]/div[2]/div[1]/div[2]/span',
     'followerCount': '//*[@id="root"]/div/div[1]/div/div/div[2]/div[2]/div[1]/div[3]/span',
-    'likeCount': '//*[@id="root"]/div/div[4]/div/div[2]/div[2]/div[1]/div/div/div[3]/div[2]/div[1]',
+    'likeCount': '//*[@id="root"]/div/div[1]/div/div/div[2]/div[2]/div[1]/div[1]/span',
     'collectCount': '//*[@id="root"]/div/div[4]/div/div[2]/div[2]/div[1]/div/div/div[6]/div[2]/div[1]',
     'visitCount': '//*[@id="root"]/div/div[4]/div/div[2]/div[2]/div[1]/div/div/div[1]/div[2]/div[1]',
 }
@@ -164,21 +164,19 @@ class DYVideoPublisher(Publisher):
         elem.click()
 
         # 确定为已登录状态
-        # 首先找到发布笔记，然后点击
-        publish_path = '//*[@id="root"]/div/div[2]/div[2]/div/div/div/div[1]/button'
         # 等待按钮找到
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
+        self.wait.until(EC.element_to_be_clickable((By.XPATH, ELEMENT['publish'])))
+        time.sleep(3)
 
         # 返回cookies
         return self.driver.get_cookies()
 
     def _do_auto_login(self, cookies: list):
-        self.driver.get(LOGIN_URL)
         # 将cookies添加到driver中
         for cookie in cookies:
             self.driver.add_cookie(cookie)
         self.driver.refresh()
-        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['publish'])))
+        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['username'])))
         time.sleep(3)
         self._save_cookies(self.driver.get_cookies())
 
@@ -187,6 +185,7 @@ class DYVideoPublisher(Publisher):
         return username_element.text
 
     def _get_user_stat(self) -> dict:
+
         user_dict = {}
         # 获取关注数量
         following_count_element = self.driver.find_element(By.XPATH, ELEMENT['followingCount'])
@@ -213,7 +212,6 @@ class DYVideoPublisher(Publisher):
         visit_count = int(visit_count_element.text)
         user_dict['visitCount'] = visit_count
         return user_dict
-
 
     def _do_publish(self, output: Generation) -> str:
         # 确定为已登录状态
@@ -283,4 +281,5 @@ publisher = DYVideoPublisher()
 
 if __name__ == '__main__':
     publisher.login()
+    print(publisher._get_user_stat())
     publisher.multi_publish()
