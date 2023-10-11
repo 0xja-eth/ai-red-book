@@ -165,7 +165,7 @@ class DYVideoPublisher(Publisher):
 
 publisher = DYVideoPublisher()
 
-if __name__ == '__main__':
-    publisher.login()
-    print(publisher._get_user_stat())
-    #  publisher.multi_publish()
+# if __name__ == '__main__':
+#     publisher.login()
+#     print(publisher._get_user_stat())
+#     #  publisher.multi_publish()

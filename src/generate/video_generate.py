@@ -20,5 +20,5 @@ class VideoGenerator(Generator):
 
 generator = VideoGenerator()
 
-if __name__ == '__main__':
-    generator.multi_generate()
+# if __name__ == '__main__':
+#     generator.multi_generate()

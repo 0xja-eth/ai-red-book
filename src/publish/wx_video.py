@@ -297,6 +297,6 @@ class WXVideoPublisher(Publisher):
 
 publisher = WXVideoPublisher()
 
-if __name__ == '__main__':
-    publisher.login()
-    print(publisher._get_user_stat())
+# if __name__ == '__main__':
+#     publisher.login()
+#     print(publisher._get_user_stat())

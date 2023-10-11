@@ -1,7 +1,7 @@
 import configparser
 import os
 
-WORK_DIR = "../"
+WORK_DIR = "./"
 
 def file(path): return os.path.join(WORK_DIR, path)
 
