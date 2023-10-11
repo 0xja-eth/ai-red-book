@@ -101,8 +101,7 @@ class Publisher:
         initial_state["publish"][self.name()] = 0
 
     def generator(self) -> Generator:
-        print(self.generate_type.value)
-        return GENERATORS[self.generate_type]
+        return GENERATORS[self.generate_type.value]
 
     def gen_name(self):
         return self.generator().name()
