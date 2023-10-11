@@ -12,16 +12,17 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
-from src.core.platform import Platform
-from src.utils import api_utils
 from src.config import config_loader
 from src.config.config_loader import get
 from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
+from src.core.platform import Platform
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
+from src.utils import api_utils
 
 CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("cookies/")
+
 
 @dataclass_json
 @dataclass
@@ -87,6 +88,7 @@ class Publisher:
     generate_type: GenerateType
     login_url: str
     user: User
+
     def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
         self.platform = platform
         self.generate_type = generate_type
@@ -191,10 +193,8 @@ class Publisher:
             self._auto_login(cookies)
         else:
             cookies = self._do_login()
-            self._save_cookies(cookies)
-
-        # raw_user = self._make_raw_user(cookies)
-        # self._record_login(raw_user)
+            if len(cookies) > 0:
+                self._save_cookies(cookies)
 
     def _auto_login(self, cookies: list):
         # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
@@ -307,4 +307,3 @@ class Publisher:
         return result
 
     # endregion
-

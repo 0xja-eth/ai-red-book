@@ -161,7 +161,7 @@ from src.core.publisher import Publisher
 #     is_looped = pb.config.get('VPublish', 'is_looped').lower() == "true"
 #
 #     main()
-LOGIN_URL = "https://channels.weixin.qq.com/login.html"
+LOGIN_URL = "https://channels.weixin.qq.com/login"
 
 ELEMENT = {
     'publish': '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button',
@@ -180,25 +180,13 @@ class WXVideoPublisher(Publisher):
         super().__init__(Platform.WX, GenerateType.Video, LOGIN_URL)
 
     def _do_login(self) -> list:
-        # 扫码登录
-        login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
-        # elem = self.driver.find_element(By.XPATH, login_ui_path)
-        # elem.click()
-        # self.driver.get(LOGIN_URL)
-
-        # 获取Cookies并返回
+        # 视频号必须扫码登录，直接返回空list
         self.wait.until(EC.element_to_be_clickable((By.XPATH, ELEMENT['username'])))
-        return self.driver.get_cookies()
+        time.sleep(3)
+        return []
 
     def _do_auto_login(self, cookies: list):
-        # 将cookies添加到driver中
-        for cookie in cookies:
-            self.driver.add_cookie(cookie)
-        self.driver.refresh()
-        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['username'])))
-        time.sleep(3)
-        self._save_cookies(self.driver.get_cookies())
+        self._do_login()
 
     def _get_user_name(self) -> str:
         # 获取用户名
@@ -207,9 +195,19 @@ class WXVideoPublisher(Publisher):
 
     def _get_user_stat(self) -> dict:
         # 获取用户统计数据
-        user_dict = {'followerCount': int(self.driver.find_element(By.XPATH, ELEMENT['followerCount']).text),
-                     'visitCount': int(self.driver.find_element(By.XPATH, ELEMENT['visitCount']).text),
-                     'likeCount': int(self.driver.find_element(By.XPATH, ELEMENT['likeCount']).text)}
+        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['followerCount'])))
+        follower_count = int(self.driver.find_element(By.XPATH, ELEMENT['followerCount']).text)
+
+        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['visitCount'])))
+        visit_count = int(self.driver.find_element(By.XPATH, ELEMENT['visitCount']).text)
+
+        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['likeCount'])))
+        like_count = int(self.driver.find_element(By.XPATH, ELEMENT['likeCount']).text)
+
+        user_dict = {'followerCount': follower_count,
+                     'visitCount': visit_count,
+                     'likeCount': like_count
+                     }
         return user_dict
 
     def _do_publish(self, output: Generation) -> str:
@@ -302,5 +300,3 @@ publisher = WXVideoPublisher()
 if __name__ == '__main__':
     publisher.login()
     print(publisher._get_user_stat())
-
-# TODO: [君扬] 根据xhs_article, xhs_video的重构方法，重构wx_video
