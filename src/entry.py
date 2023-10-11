@@ -6,7 +6,7 @@ from src.publish.index import PUBLISHERS
 if __name__ == '__main__':
 
   # 创建命令行参数解析器
-  parser = argparse.ArgumentParser(description="命令行工具示例")
+  parser = argparse.ArgumentParser(description="AI自媒体助手")
 
   # 添加操作参数
   parser.add_argument("oper", choices=["generate", "clear", "publish"], help="操作类型")
