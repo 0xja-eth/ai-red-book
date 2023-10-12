@@ -28,7 +28,7 @@ class GenerateType(Enum):
     Video = "video"
 
 
-@dataclass_json
+@dataclass_json(undefined="exclude")
 @dataclass
 class Generation:
     id: str
