@@ -133,7 +133,7 @@ class Publisher:
         return get_state("publish", self.name(), default=0)
 
     def _add_count(self):
-        set_state((self.pub_count() % self.gen_count()) + 1, "publish", self.name())
+        set_state((self.pub_count() + 1) % self.gen_count(), "publish", self.name())
 
     # endregion
 

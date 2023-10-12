@@ -161,7 +161,7 @@ from src.core.publisher import Publisher
 #     is_looped = pb.config.get('VPublish', 'is_looped').lower() == "true"
 #
 #     main()
-LOGIN_URL = "https://channels.weixin.qq.com/login"
+LOGIN_URL = "https://channels.weixin.qq.com/login.html"
 
 ELEMENT = {
     'publish': '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button',
@@ -216,9 +216,13 @@ class WXVideoPublisher(Publisher):
 
         time.sleep(3)
 
+        JS_CLICK = """
+            arguments[0].click()
+        """
+
         publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
         publish_ele = self.driver.find_element(By.XPATH, publish_path)
-        self.driver.execute_script(self.JS_CLICK, publish_ele)
+        self.driver.execute_script(JS_CLICK, publish_ele)
 
         time.sleep(3)
 
@@ -255,7 +259,7 @@ class WXVideoPublisher(Publisher):
         if True:
             location_path = 'option-item.active'
             location_none = self.driver.find_element(By.CLASS_NAME, location_path)
-            self.driver.execute_script(self.JS_CLICK, location_none)
+            self.driver.execute_script(JS_CLICK, location_none)
 
         JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
@@ -289,7 +293,7 @@ class WXVideoPublisher(Publisher):
         confirm_path = 'weui-desktop-btn.weui-desktop-btn_primary'
         confirms = self.driver.find_elements(By.CLASS_NAME, confirm_path)
         confirm = confirms[7]
-        self.driver.execute_script(self.JS_CLICK, confirm)
+        self.driver.execute_script(JS_CLICK, confirm)
 
         # 获取发布后的URL并返回
         return ""
