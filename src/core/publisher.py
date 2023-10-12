@@ -24,7 +24,7 @@ CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
 COOKIES_DIR = config_loader.file("cookies/")
 
 
-@dataclass_json
+@dataclass_json(undefined="exclude")
 @dataclass
 class User:
     id: str
@@ -32,16 +32,16 @@ class User:
     platform: Platform
     cookies: list
 
-    followingCount: int
-    followerCount: int
-    likeCount: int
-    collectCount: int
-    visitCount: int
-
     state: str
 
     createdAt: str
     updatedAt: str
+
+    followingCount: int = 0
+    followerCount: int = 0
+    likeCount: int = 0
+    collectCount: int = 0
+    visitCount: int = 0
 
     # def __init__(self, name: str, platform: Platform, cookies: list, stat: dict):
     #   self.name = name
@@ -60,7 +60,7 @@ class User:
         }
 
 
-@dataclass_json
+@dataclass_json(undefined="exclude")
 @dataclass
 class Publication:
     id: str
@@ -71,10 +71,14 @@ class Publication:
     content: str
     url: str
 
+    state: str
+
     createdAt: str
     updatedAt: str
 
-    state: str
+    visitCount: int = 0
+    likeCount: int = 0
+    commentCount: int = 0
 
     visitCount: int = 0
     likeCount: int = 0
@@ -94,10 +98,7 @@ class Publisher:
         self.generate_type = generate_type
         self.login_url = login_url
 
-        self.driver = None
-        self.wait = None
-
-        self.user = None
+        self.driver = self.wait = self.user = None
 
         if "publish" not in initial_state: initial_state["publish"] = {}
         initial_state["publish"][self.name()] = 0
