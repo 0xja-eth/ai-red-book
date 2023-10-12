@@ -276,18 +276,13 @@ class Publisher:
 
     def multi_publish(self):
         while True:
-            flag = self.publish()
-            if flag is True: break
-            if flag is False: continue
-            if flag is None: time.sleep(self.interval())
-            # try:
-            #     flag = self.publish()
-            #     if flag is True: break
-            #     if flag is False: continue
-            #     if flag is None: time.sleep(self.interval())
-            # except Exception as e:
-            #     print("Error publish: %s" % str(e))
-
+            try:
+                flag = self.publish()
+                if flag is True: break
+                if flag is False: continue
+                if flag is None: time.sleep(self.interval())
+            except Exception as e:
+                print("Error publish: %s" % str(e))
             self.driver.refresh()
 
     # endregion

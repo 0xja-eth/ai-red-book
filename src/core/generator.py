@@ -113,7 +113,6 @@ class Generator:
 
     def get_output(self, id) -> Generation | None:
         file_name = os.path.join(self.output_dir(), "%s.json" % id)
-        print(file_name)
         if not os.path.exists(file_name): return None
         with open(file_name, "r", encoding="utf8") as file:
             return Generation(**json.load(file))
