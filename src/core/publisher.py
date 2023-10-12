@@ -14,7 +14,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from src.config import config_loader
 from src.config.config_loader import get
-from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
+from src.core.generator import GenerateType, Generator, Generation
 from src.core.platform import Platform
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
@@ -71,14 +71,14 @@ class Publication:
     content: str
     url: str
 
-    visitCount: int
-    likeCount: int
-    commentCount: int
-
     createdAt: str
     updatedAt: str
 
     state: str
+
+    visitCount: int = 0
+    likeCount: int = 0
+    commentCount: int = 0
 
 
 class Publisher:
@@ -93,6 +93,11 @@ class Publisher:
         self.platform = platform
         self.generate_type = generate_type
         self.login_url = login_url
+
+        self.driver = None
+        self.wait = None
+
+        self.user = None
 
         if "publish" not in initial_state: initial_state["publish"] = {}
         initial_state["publish"][self.name()] = 0
@@ -192,6 +197,9 @@ class Publisher:
             if len(cookies) > 0:
                 self._save_cookies(cookies)
 
+        raw_user = self._make_raw_user(cookies)
+        self._record_login(raw_user)
+
     def _auto_login(self, cookies: list):
         # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
         self._do_auto_login(cookies)
@@ -267,13 +275,17 @@ class Publisher:
 
     def multi_publish(self):
         while True:
-            try:
-                flag = self.publish()
-                if flag is True: break
-                if flag is False: continue
-                if flag is None: time.sleep(self.interval())
-            except Exception as e:
-                print("Error publish: %s" % str(e))
+            flag = self.publish()
+            if flag is True: break
+            if flag is False: continue
+            if flag is None: time.sleep(self.interval())
+            # try:
+            #     flag = self.publish()
+            #     if flag is True: break
+            #     if flag is False: continue
+            #     if flag is None: time.sleep(self.interval())
+            # except Exception as e:
+            #     print("Error publish: %s" % str(e))
 
             self.driver.refresh()
 
@@ -283,7 +295,7 @@ class Publisher:
 
     @staticmethod
     def _get_abs_path(file_name):
-        return os.path.abspath(os.path.join(OUTPUT_ROOT, file_name))
+        return os.path.abspath(config_loader.file(file_name))
 
     @staticmethod
     def _n2br(text):

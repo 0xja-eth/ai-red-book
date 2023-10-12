@@ -3,18 +3,15 @@ import os
 import shutil
 import time
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 from dataclasses_json import dataclass_json
 
 from src.config import config_loader
-from src.config.config_loader import get_int, get
+from src.config.config_loader import get
 from src.core.state_manager import initial_state, get_state, set_state
 from src.utils import openai_utils, api_utils
-from dataclasses import dataclass
-
-from src.utils.api_utils import generate as upload_generation
 
 INPUT_ROOT = config_loader.file("./input")
 OUTPUT_ROOT = config_loader.file("./output")
@@ -116,6 +113,7 @@ class Generator:
 
     def get_output(self, id) -> Generation | None:
         file_name = os.path.join(self.output_dir(), "%s.json" % id)
+        print(file_name)
         if not os.path.exists(file_name): return None
         with open(file_name, "r", encoding="utf8") as file:
             return Generation(**json.load(file))
