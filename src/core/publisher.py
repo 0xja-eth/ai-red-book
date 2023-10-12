@@ -14,7 +14,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from src.config import config_loader
 from src.config.config_loader import get
-from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
+from src.core.generator import GenerateType, Generator, Generation
 from src.core.platform import Platform
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
@@ -75,6 +75,10 @@ class Publication:
 
     createdAt: str
     updatedAt: str
+
+    visitCount: int = 0
+    likeCount: int = 0
+    commentCount: int = 0
 
     visitCount: int = 0
     likeCount: int = 0
@@ -279,7 +283,6 @@ class Publisher:
                 if flag is None: time.sleep(self.interval())
             except Exception as e:
                 print("Error publish: %s" % str(e))
-
             self.driver.refresh()
 
     # endregion

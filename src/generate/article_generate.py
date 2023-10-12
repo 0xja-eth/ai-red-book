@@ -1,9 +1,10 @@
-import src.utils.image_utils as image
-from PIL import Image
 import os
 import random
 
-from src.core.generator import Generator, GenerateType, INPUT_ROOT, OUTPUT_ROOT
+from PIL import Image
+
+import src.utils.image_utils as image
+from src.core.generator import Generator, GenerateType, INPUT_ROOT
 
 # 基本信息
 # 图片存放路径
@@ -32,8 +33,12 @@ class ArticleGenerator(Generator):
 
     # endregion
 
-    def generate_9_pic(self, files, output_file):
-        files = random.sample(files, k=9)
+    def generate_9_pic(self, files, output_file, is_repeatable):
+
+        if len(files) < 9 or is_repeatable:
+            files = random.choices(files, k=9)
+        else:
+            files = random.sample(files, k=9)
         files = [os.path.join(PICTURE_ROOT, file) for file in files]
         output_image = image.generate_9_pic(files)
 
@@ -43,13 +48,17 @@ class ArticleGenerator(Generator):
 
         return output_file
 
-    def generate_4_pic(self, files, output_file):
+    def generate_4_pic(self, files, output_file, is_repeatable):
         if not self.is_repeatable():
             ids = self.generation_ids()
             urls = [url for url in [self.get_output(id).urls for id in ids]]
             files = [file for file in files if file not in urls]
 
-        files = random.sample(files, k=4)
+        if len(files) < 4 or is_repeatable:
+            files = random.choices(files, k=4)
+        else:
+            files = random.sample(files, k=4)
+
         files = [os.path.join(PICTURE_ROOT, file) for file in files]
         output_image = image.generate_4_pic(files)
 
@@ -88,9 +97,9 @@ class ArticleGenerator(Generator):
                 output_file = os.path.join(self.output_dir(), "%d-pic-%d.jpg" % (self.generating_count, i + 1))
 
             if self.pic_mode() == "9_pic":
-                output_file = self.generate_9_pic(files, output_file)
+                output_file = self.generate_9_pic(files, output_file, self.is_repeatable())
             elif self.pic_mode() == "4_pic":
-                output_file = self.generate_4_pic(files, output_file)
+                output_file = self.generate_4_pic(files, output_file, self.is_repeatable())
             elif self.pic_mode() == "single":
                 output_file = self.generate_single(files, output_file)
 

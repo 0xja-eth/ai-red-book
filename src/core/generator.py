@@ -3,18 +3,15 @@ import os
 import shutil
 import time
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 
 from dataclasses_json import dataclass_json
 
 from src.config import config_loader
-from src.config.config_loader import get_int, get
+from src.config.config_loader import get
 from src.core.state_manager import initial_state, get_state, set_state
 from src.utils import openai_utils, api_utils
-from dataclasses import dataclass
-
-from src.utils.api_utils import generate as upload_generation
 
 INPUT_ROOT = config_loader.file("./input")
 OUTPUT_ROOT = config_loader.file("./output")
