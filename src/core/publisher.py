@@ -94,9 +94,6 @@ class Publisher:
         self.generate_type = generate_type
         self.login_url = login_url
 
-        self.driver = webdriver.Chrome(service=Service(CHROME_DRIVER_PATH))
-        self.wait = WebDriverWait(self.driver, 120)
-
         if "publish" not in initial_state: initial_state["publish"] = {}
         initial_state["publish"][self.name()] = 0
 
