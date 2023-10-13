@@ -113,7 +113,6 @@ class DYVideoPublisher(Publisher):
         time.sleep(3)
 
         # 找到抖音上传视频的按钮
-        #upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label'
         upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label/input'
         upload_video = self.driver.find_element(By.XPATH, upload_video_path)
         video_url = self._get_abs_path(output.urls[0])
