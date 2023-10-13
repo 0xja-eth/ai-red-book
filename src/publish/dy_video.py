@@ -113,7 +113,8 @@ class DYVideoPublisher(Publisher):
         time.sleep(3)
 
         # 找到抖音上传视频的按钮
-        upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label'
+        #upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label'
+        upload_video_path = '//*[@id="root"]/div/div/div[3]/div/div[1]/div/div[1]/div/label/input'
         upload_video = self.driver.find_element(By.XPATH, upload_video_path)
         video_url = self._get_abs_path(output.urls[0])
         upload_video.send_keys(video_url)
@@ -153,7 +154,7 @@ class DYVideoPublisher(Publisher):
         time.sleep(3)
 
         # 发布
-        p_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[17]/button[1]'
+        p_path = '//*[@id="root"]/div/div/div[2]/div[1]/div[18]/button[1]'
 
         self.wait.until(EC.element_to_be_clickable((By.XPATH, p_path)))
         p = self.driver.find_element(By.XPATH, p_path)
@@ -165,7 +166,7 @@ class DYVideoPublisher(Publisher):
 
 publisher = DYVideoPublisher()
 
-# if __name__ == '__main__':
-#     publisher.login()
-#     print(publisher._get_user_stat())
-#     #  publisher.multi_publish()
+if __name__ == '__main__':
+    publisher.login()
+    print(publisher._get_user_stat())
+    publisher.multi_publish()
