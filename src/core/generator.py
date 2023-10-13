@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import time
@@ -6,6 +5,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 
+import openpyxl
 from dataclasses_json import dataclass_json
 
 from src.config import config_loader
@@ -112,15 +112,65 @@ class Generator:
         return os.path.join(OUTPUT_ROOT, self.name())
 
     def get_output(self, id) -> Generation | None:
-        file_name = os.path.join(self.output_dir(), "%s.json" % id)
+        file_name = os.path.join(self.output_dir(), 'output.xlsx')
         if not os.path.exists(file_name): return None
         with open(file_name, "r", encoding="utf8") as file:
-            return Generation(**json.load(file))
+            # 获取excel中编号为id的一行数据
+            for row in openpyxl.load_workbook(file_name).active.rows:
+                if row[0].value == id:
+                    # 分开获取url转为列表
+                    temp_urls = []
+                    for i in range(3, len(row) - 4):
+                        temp_urls.append(row[i].value)
+                    return Generation(
+                        id=row[0].value,
+                        type=self.generate_type,
+                        title=row[1].value,
+                        content=row[2].value,
+                        urls=temp_urls,
+                        titlePrompt=row[-4].value,
+                        contentPrompt=row[-3].value,
+                        createdAt=row[-2].value,
+                        updatedAt=row[-1].value
+                    )
 
     def _save_generation(self, generation: Generation):
-        file_name = os.path.join(self.output_dir(), "%s.json" % generation.id)
-        with open(file_name, "w", encoding="utf8") as file:
-            json.dump(generation.to_dict(), file)
+        file_name = os.path.join(self.output_dir(), "output.xlsx")
+        # 若不存在文件，则创建文件
+        if not os.path.exists(file_name):
+            open(file_name, "w", encoding="utf8").close()
+        try:
+            # 如果表为空，则写入表头
+            if os.path.getsize(file_name) == 0:
+                # 创建一个新的Excel工作簿
+                workbook = openpyxl.Workbook()
+                # 选择默认的工作表
+                worksheet = workbook.active
+                header = ['ID', '标题', '内容']
+                for i in range(len(generation.urls)):
+                    header.append("图片%d" % (i + 1))
+                header.extend(['标题提示词', '内容提示词', '创建时间', '更新时间'])
+                worksheet.append(header)
+                # 保存Excel文件
+                workbook.save(file_name)
+
+            # 加载Excel文件
+            workbook = openpyxl.load_workbook(file_name)
+            # 选择默认的工作表
+            worksheet = workbook.active
+            new_row = [generation.id, generation.title, generation.content]
+            for url in generation.urls:
+                new_row.append(url)
+            new_row.extend(
+                [generation.titlePrompt, generation.contentPrompt, generation.createdAt, generation.updatedAt])
+            worksheet.append(new_row)
+
+            # 保存Excel文件
+            workbook.save(file_name)
+            print("Excel文件保存成功！")
+
+        except Exception as e:
+            print("保存Excel文件时出现异常：", str(e))
 
     # endregion
 
