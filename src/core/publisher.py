@@ -139,6 +139,9 @@ class Publisher:
     def _add_count(self):
         set_state((self.pub_count() + 1) % self.gen_count(), "publish", self.name())
 
+    def _clear_count(self):
+        set_state(0, "publish", self.name())
+
     # endregion
 
     # region Cookies
@@ -284,6 +287,9 @@ class Publisher:
             except Exception as e:
                 print("Error publish: %s" % str(e))
             self.driver.refresh()
+
+    def clear(self):
+        self._clear_count()
 
     # endregion
 

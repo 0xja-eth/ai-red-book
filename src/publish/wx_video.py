@@ -256,10 +256,10 @@ class WXVideoPublisher(Publisher):
         time.sleep(3)
 
         # TODO 判断是否不显示位置
-        if True:
-            location_path = 'option-item.active'
-            location_none = self.driver.find_element(By.CLASS_NAME, location_path)
-            self.driver.execute_script(JS_CLICK, location_none)
+        location_path = 'option-item.active'
+        location_none = self.driver.find_element(By.CLASS_NAME, location_path)
+        self.driver.execute_script(JS_CLICK, location_none)
+        # if True:
 
         JS_CODE_ADD_TEXT = """
       console.log("arguments", arguments)
