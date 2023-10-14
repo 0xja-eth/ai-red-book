@@ -7,6 +7,7 @@ from enum import Enum
 
 import openpyxl
 from dataclasses_json import dataclass_json
+from openpyxl.styles import Font, Alignment
 
 from src.config import config_loader
 from src.config.config_loader import get
@@ -18,6 +19,17 @@ OUTPUT_ROOT = config_loader.file("./output")
 
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
+
+COL_WIDTH = {
+    "ID": 12,
+    "标题": 32,
+    "内容": 128,
+    "素材": 16,
+    "标题提示词": 32,
+    "内容提示词": 32,
+    "创建时间": 16,
+    "更新时间": 16
+}
 
 
 class GenerateType(Enum):
@@ -51,6 +63,8 @@ class Generator:
 
         self.title_prompt = None
         self.content_prompt = None
+
+        self._cache_output = {}
 
         if "generate" not in initial_state: initial_state["generate"] = {}
         initial_state["generate"][self.name()] = []
@@ -111,61 +125,115 @@ class Generator:
     def output_dir(self):
         return os.path.join(OUTPUT_ROOT, self.name())
 
+    _cache_output = {}
     def get_output(self, id) -> Generation | None:
+        if id in self._cache_output: return self._cache_output[id]
+
         file_name = os.path.join(self.output_dir(), 'output.xlsx')
         if not os.path.exists(file_name): return None
-        with open(file_name, "r", encoding="utf8") as file:
-            # 获取excel中编号为id的一行数据
-            for row in openpyxl.load_workbook(file_name).active.rows:
-                if row[0].value == id:
-                    # 分开获取url转为列表
-                    temp_urls = []
-                    for i in range(3, len(row) - 4):
-                        temp_urls.append(row[i].value)
-                    return Generation(
-                        id=row[0].value,
-                        type=self.generate_type,
-                        title=row[1].value,
-                        content=row[2].value,
-                        urls=temp_urls,
-                        titlePrompt=row[-4].value,
-                        contentPrompt=row[-3].value,
-                        createdAt=row[-2].value,
-                        updatedAt=row[-1].value
-                    )
+
+        self._cache_output[id] = None
+
+        # 获取excel中编号为id的一行数据
+        for row in openpyxl.load_workbook(file_name).active.rows:
+            if row[0].value == id:
+                # 分开获取url转为列表
+                temp_urls = [
+                    row[i].value for i in range(3, len(row) - 4) if row[i].value != "-"
+                ]
+                # for i in range(3, len(row) - 4):
+                #     if row[i].value != "-":
+                #         temp_urls.append(row[i].value)
+
+                self._cache_output[id] = Generation(
+                    id=row[0].value,
+                    type=self.generate_type,
+                    title=row[1].value,
+                    content=row[2].value,
+                    urls=temp_urls,
+                    titlePrompt=row[-4].value,
+                    contentPrompt=row[-3].value,
+                    createdAt=row[-2].value,
+                    updatedAt=row[-1].value
+                )
+                break
+        # with open(file_name, "r", encoding="utf8") as file:
+
+        return self._cache_output[id]
 
     def _save_generation(self, generation: Generation):
         file_name = os.path.join(self.output_dir(), "output.xlsx")
-        # 若不存在文件，则创建文件
-        if not os.path.exists(file_name):
-            open(file_name, "w", encoding="utf8").close()
-        try:
-            # 如果表为空，则写入表头
-            if os.path.getsize(file_name) == 0:
-                # 创建一个新的Excel工作簿
-                workbook = openpyxl.Workbook()
-                # 选择默认的工作表
-                worksheet = workbook.active
-                header = ['ID', '标题', '内容']
-                for i in range(len(generation.urls)):
-                    header.append("图片%d" % (i + 1))
-                header.extend(['标题提示词', '内容提示词', '创建时间', '更新时间'])
-                worksheet.append(header)
-                # 保存Excel文件
-                workbook.save(file_name)
 
-            # 加载Excel文件
-            workbook = openpyxl.load_workbook(file_name)
-            # 选择默认的工作表
+        # 如果文件不存在，创建它
+        is_new_file = not os.path.exists(file_name)
+        if is_new_file: open(file_name, "w", encoding="utf8").close()
+
+        try:
+            workbook = openpyxl.Workbook() if is_new_file else openpyxl.load_workbook(file_name)
             worksheet = workbook.active
-            new_row = [generation.id, generation.title, generation.content]
-            for url in generation.urls:
-                new_row.append(url)
-            new_row.extend(
-                [generation.titlePrompt, generation.contentPrompt, generation.createdAt, generation.updatedAt])
+
+            link_font = Font(color="0000FF", underline="single")
+
+            generation_headers = (['ID', '标题', '内容'] +
+                       ["素材 #%d" % (i + 1) for i in range(len(generation.urls))] +
+                       ['标题提示词', '内容提示词', '创建时间', '更新时间'])
+            generation_col = len(generation_headers)
+
+            max_col = worksheet.max_column
+            # 确定最大col数量
+            real_max_col = max([max_col, generation_col])
+            real_url_col = real_max_col - 7
+
+            if is_new_file:
+                worksheet.append(generation_headers)
+            else:
+                # 如果需要，更新标题
+                if max_col < real_max_col:
+                    # 更新工作表标题
+                    for col_num, header_value in enumerate(generation_headers, 1):
+                        worksheet.cell(row=1, column=col_num, value=header_value)
+
+                # 更新现有的行以确保每行都有相同数量的列
+                for row_num in range(2, worksheet.max_row + 1):
+                    curr_row_len = len([cell for cell in worksheet[row_num] if cell.value is not None])
+                    if real_max_col == curr_row_len: continue
+
+                    for i in range(4):
+                        last_val = worksheet.cell(row=row_num, column=curr_row_len - i).value
+                        worksheet.cell(row=row_num, column=real_max_col - i, value=last_val)
+
+                    for i in range(real_max_col - curr_row_len):
+                        worksheet.cell(row=row_num, column=curr_row_len - 3 + i, value="-")
+                # for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row, values_only=False):
+                #     while len(row) < header_len:
+                #         worksheet.cell(row=row[0].row, column=len(row) + 1, value="")
+
+            # 添加新数据
+            new_row = ([generation.id, generation.title, generation.content] +
+                       generation.urls + ["-"] * (real_url_col - len(generation.urls)) +
+                       [generation.titlePrompt, generation.contentPrompt, generation.createdAt, generation.updatedAt])
             worksheet.append(new_row)
 
-            # 保存Excel文件
+            new_row_cells = worksheet[worksheet.max_row]
+
+            new_row_cells[1].alignment = Alignment(wrapText=True)
+            new_row_cells[2].alignment = Alignment(wrapText=True)
+            new_row_cells[real_max_col - 3].alignment = Alignment(wrapText=True)
+            new_row_cells[real_max_col - 4].alignment = Alignment(wrapText=True)
+
+            for i, url in enumerate(generation.urls, 3):
+                if url:
+                    new_row_cells[i].hyperlink = os.path.abspath(url)
+                    new_row_cells[i].font = link_font
+
+            real_headers = [cell.value for cell in worksheet[1]]
+            col_widths = [COL_WIDTH[key.split(" ")[0]] for key in real_headers]
+
+            for (i, col) in enumerate(worksheet.columns):
+                column = col[0].column_letter
+                worksheet.column_dimensions[column].width = col_widths[i]
+
+            # 保存工作簿
             workbook.save(file_name)
             print("Excel文件保存成功！")
 
