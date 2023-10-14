@@ -214,12 +214,18 @@ class Generator:
                        [generation.titlePrompt, generation.contentPrompt, generation.createdAt, generation.updatedAt])
             worksheet.append(new_row)
 
+            # 创建垂直居中的对齐方式
+            alignment = Alignment(wrapText=True, vertical='center')
+            # 遍历工作表的所有单元格并设置垂直居中
+            for row in worksheet.iter_rows():
+                for cell in row: cell.alignment = alignment
+
             new_row_cells = worksheet[worksheet.max_row]
 
-            new_row_cells[1].alignment = Alignment(wrapText=True)
-            new_row_cells[2].alignment = Alignment(wrapText=True)
-            new_row_cells[real_max_col - 3].alignment = Alignment(wrapText=True)
-            new_row_cells[real_max_col - 4].alignment = Alignment(wrapText=True)
+            # new_row_cells[1].alignment = Alignment(wrapText=True)
+            # new_row_cells[2].alignment = Alignment(wrapText=True)
+            # new_row_cells[real_max_col - 3].alignment = Alignment(wrapText=True)
+            # new_row_cells[real_max_col - 4].alignment = Alignment(wrapText=True)
 
             for i, url in enumerate(generation.urls, 3):
                 if url:
