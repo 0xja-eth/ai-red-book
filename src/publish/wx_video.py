@@ -220,9 +220,15 @@ class WXVideoPublisher(Publisher):
             arguments[0].click()
         """
 
-        publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
-        publish_ele = self.driver.find_element(By.XPATH, publish_path)
+        # publish_path = '//*[@id="container-wrap"]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/div[2]/div/button'
+        # publish_ele = self.driver.find_element(By.XPATH, publish_path)
+        # self.driver.execute_script(JS_CLICK, publish_ele)
+
+        publish_path = 'weui-desktop-btn.weui-desktop-btn_primary'
+        publish_eles = self.driver.find_elements(By.CLASS_NAME, publish_path)
+        publish_ele = publish_eles[1]
         self.driver.execute_script(JS_CLICK, publish_ele)
+
 
         time.sleep(3)
 
