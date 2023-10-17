@@ -106,6 +106,7 @@ class Publisher:
     user: User
 
     page: pyppeteer.page
+    loop=asyncio.new_event_loop()
 
     def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
         self.platform = platform
@@ -185,7 +186,6 @@ class Publisher:
     # region Login
 
     def login(self):
-
         cookies = self.get_cookies()
         if len(cookies) > 0:
             self._auto_login(cookies)
@@ -199,58 +199,10 @@ class Publisher:
 
     def _auto_login(self, cookies: list):
         # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
-        self._do_auto_login(cookies)
+        self.loop.run_until_complete(self._do_auto_login(cookies))
 
     @abstractmethod
     async def _do_auto_login(self, cookies: list):
-        pass
-
-    @abstractmethod
-    def _do_login(self) -> list:
-        pass
-
-    def _make_raw_user(self, cookies):
-        return {
-            "name": self._get_user_name(),
-            "platform": self.platform.value,
-            "cookies": cookies,
-            "stat": self._get_user_stat()
-        }
-
-    @abstractmethod
-    def _get_user_name(self) -> str:
-        pass
-
-    @abstractmethod
-    def _get_user_stat(self) -> dict:
-        pass
-
-    def _record_login(self, raw_user):
-        login_res = api_utils.login(**raw_user)
-        self.user = User(**login_res["user"])
-
-    # endregion
-
-    # region Login
-
-    def login(self):
-        cookies = self.get_cookies()
-        if len(cookies) > 0:
-            self._auto_login(cookies)
-        else:
-            cookies = self._do_login()
-            if len(cookies) > 0:
-                self._save_cookies(cookies)
-
-        raw_user = self._make_raw_user(cookies)
-        self._record_login(raw_user)
-
-    def _auto_login(self, cookies: list):
-        # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
-        self._do_auto_login(cookies)
-
-    @abstractmethod
-    def _do_auto_login(self, cookies: list):
         pass
 
     @abstractmethod
@@ -274,8 +226,9 @@ class Publisher:
         pass
 
     def _record_login(self, raw_user):
-        login_res = api_utils.login(**raw_user)
-        self.user = User(**login_res["user"])
+        pass
+        # login_res = api_utils.login(**raw_user)
+        # self.user = User(**login_res["user"])
 
     # endregion
 
@@ -292,9 +245,9 @@ class Publisher:
         output = self.generator().get_output(generate_id)
         if output is None: return False
 
-        asyncio.new_event_loop().run_until_complete(self._do_publish(output))
+        url = self.loop.run_until_complete(self._do_publish(output))
 
-        #publication = self._upload_publication(output, url)
+        publication = self._upload_publication(output, url)
 
         self._add_count()
 

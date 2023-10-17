@@ -190,9 +190,6 @@ class Publisher:
     # region Login
 
     def login(self):
-        if self.driver is None: self.init_driver()
-        self.driver.get(self.login_url)
-
         cookies = self.get_cookies()
         if len(cookies) > 0:
             self._auto_login(cookies)
