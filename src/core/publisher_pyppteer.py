@@ -10,7 +10,6 @@ from dataclasses_json import dataclass_json
 from src.core.platform import Platform
 
 import asyncio
-from pyppeteer import launch
 
 from src.config import config_loader
 from src.config.config_loader import get
@@ -94,10 +93,6 @@ class Publication:
     likeCount: int = 0
     commentCount: int = 0
 
-    visitCount: int = 0
-    likeCount: int = 0
-    commentCount: int = 0
-
 class Publisher:
     platform: Platform
     generate_type: GenerateType
@@ -106,7 +101,7 @@ class Publisher:
     user: User
 
     page: pyppeteer.page
-    loop=asyncio.new_event_loop()
+    loop = asyncio.new_event_loop()
 
     def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
         self.platform = platform
@@ -307,67 +302,4 @@ class Publisher:
 
         return result
 
-# async def main():
-#     # 设置参数，打开浏览器页面
-#     browser = await launch(**start_parm)
-#     page = await browser.newPage()
-#     await page.goto('https://creator.xiaohongshu.com/publish/publish?source=official')
-#     await page.waitFor(3000)  # 实测没有等待会报错，不知道原因
-#
-#     # 进行点击二维码进行登录
-#     await page.click('#page > div > div.content > div.con > div.login-box-container > div > div > div > div > img')
-#     await page.waitForSelector(
-#         '#content-area > main > div.menu-container.menu-panel > div > div.publish-video > a')  # 等待进入下一个界面
-#     # 点击‘发布视频’
-#     await page.click('#content-area > main > div.menu-container.menu-panel > div > div.publish-video > a')
-#     await page.waitForSelector(
-#         '#publish-container > div > div.video-uploader-container.upload-area > div.upload-wrapper > div > div > div')
-#     # 上传视频
-#     upload_video = await page.waitForSelector('input[type="file"]')
-#     await upload_video.uploadFile(video_path)
-#     # 上传标题和文本
-#     upload_title = await page.waitForSelector(
-#         '#publish-container > div > div:nth-child(3) > div.content > div.c-input.titleInput > input')
-#     await upload_title.type(get_title())
-#     upload_content = await page.waitForSelector('#post-textarea')
-#     await upload_content.type(get_content())
-#
-#     # 等待确保发布按钮可以点击，暂时还没找到判断按钮是否可以点击的API
-#
-#     await page.waitFor(4000)
-#     # 点击上传
-#     await page.click(
-#         '#publish-container > div > div:nth-child(3) > div.content > div.submit > button.css-k3hpu2.css-osq2ks.dyn.publishBtn.red')
-#
-#     await page.waitFor(5000)
-#     await browser.close()
-#
-#
-# # driver: webdriver.Chrome
-# # wait: WebDriverWait
-#
-# # 读取配置文件
-# config = configparser.ConfigParser()
-# config.read("./config.ini")
-#
-# with open(VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-#     max_count = int(vc_file.read())
-#
-# with open(PUB_VIDEO_COUNT_FILE, encoding="utf8") as vc_file:
-#     count = int(vc_file.read())
-#
-#
-# def get_title():
-#     with open(title_path, encoding="utf8") as file:
-#         return file.read()
-#
-#
-# def get_content():
-#     with open(content_path, encoding="utf8") as file:
-#         return file.read()
-#
-#
-# if __name__ == '__main__':
-#     interval = int(config.get('VPublish', 'interval'))
-#     is_looped = config.get('VPublish', 'is_looped').lower() == "true"
-#     asyncio.new_event_loop().run_until_complete(main())
+    # endregion
