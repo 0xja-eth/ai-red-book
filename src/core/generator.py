@@ -69,6 +69,21 @@ class Generator:
         if "generate" not in initial_state: initial_state["generate"] = {}
         initial_state["generate"][self.name()] = []
 
+        # 不存在input目录则创建
+        if not os.path.exists(INPUT_ROOT):
+            os.makedirs(INPUT_ROOT)
+            os.mkdir(os.path.join(INPUT_ROOT, "picture"))
+            os.mkdir(os.path.join(INPUT_ROOT, "video"))
+            if not os.path.exists(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE)):
+                with open(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE), "w", encoding="utf8") as file:
+                    pass
+            if not os.path.exists(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE)):
+                with open(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE), "w", encoding="utf8") as file:
+                    pass
+            if not os.path.exists(os.path.join(INPUT_ROOT, "title.png")):
+                with open(os.path.join(INPUT_ROOT, "title.png"), "w", encoding="utf8") as file:
+                    pass
+
     def name(self):
         return self.generate_type.value
 
@@ -164,7 +179,10 @@ class Generator:
     def _save_generation(self, generation: Generation):
         file_name = os.path.join(self.output_dir(), "output.xlsx")
 
-        # 如果文件不存在，创建它
+        # 如果目录不存在，则创建
+        if not os.path.exists(self.output_dir()):
+            os.makedirs(self.output_dir())
+        # 如果文件不存在，则创建
         is_new_file = not os.path.exists(file_name)
         if is_new_file: open(file_name, "w", encoding="utf8").close()
 
