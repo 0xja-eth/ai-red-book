@@ -46,7 +46,7 @@ class ArticleGenerator(Generator):
     if not self.is_repeatable():
       ids = self.generation_ids()
       urls = [os.path.normpath(url) for url in self.flatten(
-        [self.get_output(id).urls for id in ids if self.get_output(id) is not None]
+        [self.get_output(id).urls for id in ids]
       )]
       new_files = [file for file in files if file not in urls]
       if len(new_files) >= count: files = new_files
