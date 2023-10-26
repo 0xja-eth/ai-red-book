@@ -58,7 +58,7 @@ class ArticleGenerator(Generator):
 
     return files
 
-  def generate_9_pic(self, files, output_file):
+  def generate_9_pic(self, files, output_file, index):
 
     files = self.filter_files(files, 9)
 
@@ -77,13 +77,14 @@ class ArticleGenerator(Generator):
 
     output_image = image.generate_9_pic(files)
 
-    if self.use_title(): output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+    if self.use_title() and index == 0:
+      output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
 
     output_image.save(output_file)
 
     return output_file
 
-  def generate_4_pic(self, files, output_file):
+  def generate_4_pic(self, files, output_file, index):
 
     files = self.filter_files(files, 4)
 
@@ -102,7 +103,8 @@ class ArticleGenerator(Generator):
 
     output_image = image.generate_4_pic(files)
 
-    if self.use_title(): output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+    if self.use_title() and index == 0:
+      output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
 
     output_image.save(output_file)
 
@@ -137,7 +139,10 @@ class ArticleGenerator(Generator):
         file = res[i]
 
         output_image = Image.open(file)
-        output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+        if i == 0:
+          output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+
+        output_image = output_image.convert("RGB")
         output_image.save(output_file)
 
         res[i] = output_file
@@ -160,9 +165,9 @@ class ArticleGenerator(Generator):
           output_file = os.path.join(self.output_dir(), "%d-pic-%d.jpg" % (self.generating_count, i + 1))
 
         if self.pic_mode() == "9_pic":
-          output_file = self.generate_9_pic(files, output_file)
+          output_file = self.generate_9_pic(files, output_file, i)
         elif self.pic_mode() == "4_pic":
-          output_file = self.generate_4_pic(files, output_file)
+          output_file = self.generate_4_pic(files, output_file, i)
 
         urls.append(output_file)
 
