@@ -1,14 +1,13 @@
 import time
+import asyncio
 
-from selenium.common import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+import pyppeteer
+from pyppeteer import launch
 
 from src.core.generator import Generation, GenerateType
-from src.core.platform import Platform
-from src.core.publisher import Publisher
+from src.core.publisher import Publisher, Platform, START_OPTION
 
-LOGIN_URL = "https://creator.xiaohongshu.com/login"
+LOGIN_URL = "https://creator.xiaohongshu.com/publish/publish?source=official"
 
 ELEMENT = {
     'publish': '//*[@id="content-area"]/main/div[1]/div/div[1]/a',
@@ -19,140 +18,95 @@ ELEMENT = {
     'recentVisitCount': '//*[@id="app"]/div/div[1]/div[2]/div[2]/div[3]/span[2]',
 }
 
-
 class XHSVideoPublisher(Publisher):
 
     def __init__(self):
         super().__init__(Platform.XHS, GenerateType.Video, LOGIN_URL)
 
-    def _do_login(self) -> list:
-        # 扫码登录
-        login_ui_path = '//*[@id="page"]/div/div[2]/div[1]/div[2]/div/div/div/div/img'
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, login_ui_path)))
-        elem = self.driver.find_element(By.XPATH, login_ui_path)
-        elem.click()
-        # 确定为已登陆状态
-        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['publish'])))
-        time.sleep(3)
-        # 获取Cookies并返回
-        return self.driver.get_cookies()
+    async def _do_login(self):
+        # 打开网页
+        browser = await launch(**START_OPTION)
+        self.page = await browser.newPage()
+        await self.page.goto(LOGIN_URL)
+        await self.page.waitFor(3000)  # 实测没有等待会报错，不知道原因
 
-    def _do_auto_login(self, cookies: list):
-        # 将cookies添加到driver中
+        # 进行点击二维码进行登录
+        await self.page.click('#page > div > div.content > div.con > div.login-box-container > div > div > div > div > img')
+        await self.page.waitForSelector(
+            '#content-area > main > div.menu-container.menu-panel > div > div.publish-video > a')  # 等待进入下一个界面
+
+        # TODO: [莫倪] 获取Cookies并返回
+        return await self.page.cookies()
+
+    async def _do_auto_login(self, cookies: list):
+        browser = await launch(**START_OPTION)
+        self.page = await browser.newPage()
+
         for cookie in cookies:
-            self.driver.add_cookie(cookie)
-        self.driver.refresh()
-        self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['publish'])))
-        time.sleep(3)
-        self._save_cookies(self.driver.get_cookies())
+            await self.page.setCookie(cookie)
+
+        await self.page.goto(self.login_url)
+        await self.page.reload()
+        await self.page.waitFor(3000)
 
     def _get_user_name(self) -> str:
-        # 获取用户名
-        try:
-            uid_element = self.wait.until(EC.presence_of_element_located((By.XPATH, ELEMENT['username'])))
-            return uid_element.text
-        except NoSuchElementException:
-            return ""
+        # TODO: [莫倪] 获取用户名
+        pass
 
     def _get_user_stat(self) -> dict:
-        # 获取用户统计数据
-        user_dict = {}
+        # TODO: [莫倪] 获取用户统计数据
+        pass
 
-        try:
-            # 获取关注数
-            following_count_element = self.driver.find_element(By.XPATH, ELEMENT['followingCount'])
-            following_count = int(following_count_element.text)
-            user_dict['followingCount'] = following_count
-        except (NoSuchElementException, ValueError):
-            user_dict['followingCount'] = 0
-
-        try:
-            # 获取粉丝数
-            follower_count_element = self.driver.find_element(By.XPATH, ELEMENT['followerCount'])
-            follower_count = int(follower_count_element.text)
-            user_dict['followerCount'] = follower_count
-        except (NoSuchElementException, ValueError):
-            user_dict['followerCount'] = 0
-
-        try:
-            # 获赞与收藏
-            like_and_collect_element = self.driver.find_element(By.XPATH, ELEMENT['likeAndCollectCount'])
-            like_and_collect = int(like_and_collect_element.text)
-            user_dict['likeCount'] = like_and_collect
-            user_dict['collectCount'] = like_and_collect
-        except (NoSuchElementException, ValueError):
-            user_dict['likeCount'] = 0
-            user_dict['collectCount'] = 0
-
-        try:
-            # 近七日访客
-            recent_visit_element = self.driver.find_element(By.XPATH, ELEMENT['recentVisitCount'])
-            recent_visit = int(recent_visit_element.text)
-            user_dict['visitCount'] = recent_visit
-        except (NoSuchElementException, ValueError):
-            user_dict['visitCount'] = 0
-
-        return user_dict
-
-    def _do_publish(self, output: Generation) -> str:
+    async def _do_publish(self, output: Generation) -> str:
         # 确定为已登录状态
         # 首先找到发布笔记，然后点击
-        publish_path = '//*[@id="content-area"]/main/div[1]/div/div[1]/a'
-        # 等待按钮找到
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, publish_path)))
-        publish = self.driver.find_element(By.XPATH, publish_path)
-        publish.click()
-        time.sleep(3)
-
-        upload_video = self.driver.find_element(By.CLASS_NAME, "upload-input")
+        await self.page.click('#content-area > main > div.menu-container.menu-panel > div > div.publish-video > a')
+        await self.page.waitForSelector(
+            '#publish-container > div > div.video-uploader-container.upload-area > div.upload-wrapper > div > div > div')
+        # 上传视频
+        upload_video = await self.page.querySelector('input[type="file"]')
         video_url = self._get_abs_path(output.urls[0])
-        upload_video.send_keys(video_url)
-
-        # 等待视频上传完成
-        while True:
-            time.sleep(3)
-            try:
-                self.driver.find_element(By.CLASS_NAME, "reUpload")
-                break
-            except Exception as e:
-                print("Video is still uploading...")
-
-        print("Video uploaded!")
+        await upload_video.uploadFile(video_url)
 
         title_text, content_text = output.title, output.content
 
+        #上传标题和文本
+        upload_title = await self.page.waitForSelector(
+            '#publish-container > div > div:nth-child(3) > div.content > div.c-input.titleInput > input')
+        await upload_title.type(title_text)
+        upload_content = await self.page.waitForSelector('#post-textarea')
+        await upload_content.type(content_text)
+
+        # 等待确保发布按钮可以点击，暂时还没找到判断按钮是否可以点击的API
+
+        await self.page.waitFor(4000)
+        # 点击上传
+        await self.page.click(
+            '#publish-container > div > div:nth-child(3) > div.content > div.submit > button.css-k3hpu2.css-osq2ks.dyn.publishBtn.red')
+
+        await self.page.waitFor(5000)
+
+        # 等待视频上传完成
+        # TODO:检测是否上传完成
+
+        # title_text, content_text = output.title, output.content
+
         JS_CODE_ADD_TEXT = """
-          console.log("arguments", arguments)
-          var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
-          elm[key] += txt;
-          elm.dispatchEvent(new Event('change'));
-      """
+         console.log("arguments", arguments)
+         var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+         elm[key] += txt;
+         elm.dispatchEvent(new Event('change'));
+        """
 
-        # 上传标题
-        title_path = "c-input_inner"
-        title_elm = self.driver.find_element(By.CLASS_NAME, title_path)
-        self.driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
-        time.sleep(3)
-
-        # 上传内容
-        content_path = "post-content"
-        content_elm = self.driver.find_element(By.CLASS_NAME, content_path)
-        self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, self._n2br(content_text), "innerHTML")
-        time.sleep(3)
-
-        # 上传
-        # css-k3hpu2.css-osq2ks.dyn.publishBtn.red
-        p_path = 'css-k3hpu2.css-osq2ks.dyn.publishBtn.red'
-
-        self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, p_path)))
-        p = self.driver.find_element(By.CLASS_NAME, p_path)
-        p.click()
         # TODO: [莫倪] 获取发布后的URL并返回
         return ""
 
-
 publisher = XHSVideoPublisher()
 
-# if __name__ == '__main__':
-#     publisher.login()
-#     print(publisher._get_user_stat())
+async def main():
+    await publisher.login()
+    await publisher.multi_publish()
+
+if __name__ == '__main__':
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(main())

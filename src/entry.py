@@ -27,6 +27,13 @@ if __name__ == '__main__':
     GENERATORS[args.generate_type].clear()
 
   elif args.oper == "publish":
+    import asyncio
+
     publisher = PUBLISHERS["%s_%s" % (args.platform, args.generate_type)]
-    publisher.login()
-    publisher.multi_publish()
+
+    async def main():
+      await publisher.login()
+      await publisher.multi_publish()
+
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(main())

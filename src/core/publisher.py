@@ -33,7 +33,7 @@ video_path = "./1-vi.mp4"
 title_path = "./title_prompt.txt"
 content_path = "./content_prompt.txt"
 
-start_parm = {
+START_OPTION = {
     # 关闭无头浏览器 默认是无头启动的
     "headless": False,
 }
@@ -178,30 +178,53 @@ class Publisher:
 
     # endregion
 
+    # region Resize
+
+    def screen_size(self):
+        # 使用tkinter获取屏幕大小
+        import tkinter
+        tk = tkinter.Tk()
+        width = tk.winfo_screenwidth()
+        height = tk.winfo_screenheight()
+        tk.quit()
+        return width, height
+
+    async def screen_resize(self):
+        width, height = self.screen_size()
+        await self.page.setViewport({
+            "width": width,
+            "height": height
+        })
+
+    # endregion
+
     # region Login
 
-    def login(self):
+    async def login(self):
         cookies = self.get_cookies()
         if len(cookies) > 0:
-            self._auto_login(cookies)
+            await self._auto_login(cookies)
         else:
-            cookies = self._do_login()
+            cookies = await self._do_login()
             if len(cookies) > 0:
                 self._save_cookies(cookies)
 
         raw_user = self._make_raw_user(cookies)
         self._record_login(raw_user)
 
-    def _auto_login(self, cookies: list):
+        await self.screen_resize()
+
+    async def _auto_login(self, cookies: list):
         # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
-        self.loop.run_until_complete(self._do_auto_login(cookies))
+        # self.loop.run_until_complete(self._do_auto_login(cookies))
+        await self._do_auto_login(cookies)
 
     @abstractmethod
     async def _do_auto_login(self, cookies: list):
         pass
 
     @abstractmethod
-    def _do_login(self) -> list:
+    async def _do_login(self) -> list:
         pass
 
     def _make_raw_user(self, cookies):
@@ -227,7 +250,7 @@ class Publisher:
 
     # endregion
 
-    def publish(self):
+    async def publish(self):
         """
             发布一条内容
             :return: True if need to break, False if continue next one, None if all success
@@ -240,7 +263,7 @@ class Publisher:
         output = self.generator().get_output(generate_id)
         if output is None: return False
 
-        url = self.loop.run_until_complete(self._do_publish(output))
+        url = await self._do_publish(output)
 
         publication = self._upload_publication(output, url)
 
@@ -264,10 +287,10 @@ class Publisher:
             "url": url
         }))
 
-    def multi_publish(self):
+    async def multi_publish(self):
         while True:
             try:
-                flag = self.publish()
+                flag = await self.publish()
                 if flag is True: break
                 if flag is False: continue
                 if flag is None: time.sleep(self.interval())
@@ -285,7 +308,7 @@ class Publisher:
         return os.path.abspath(os.path.join(OUTPUT_ROOT, file_name))
 
     @staticmethod
-    def _br_ize(text):
+    def _n2br(text):
         return text.replace("\n", "<br/>")
 
     @staticmethod
