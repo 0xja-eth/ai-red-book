@@ -162,6 +162,7 @@ temp
 *.zip
 
 input/*
+!input/default/
 output/*
 state.json
 

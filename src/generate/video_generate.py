@@ -12,6 +12,12 @@ class VideoGenerator(Generator):
     def __init__(self):
         super().__init__(GenerateType.Video)
 
+    def check_files(self):
+        super().check_files()
+
+        if not os.path.exists(VIDEO_ROOT):
+            os.makedirs(VIDEO_ROOT)
+
     def _generate_media(self) -> list:
         files = os.listdir(VIDEO_ROOT)
         file = files[(self.generating_count - 1) % len(files)]

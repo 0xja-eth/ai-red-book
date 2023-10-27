@@ -31,6 +31,56 @@ COL_WIDTH = {
     "更新时间": 16
 }
 
+# DEFAULT_PROMPTS = {
+#     "title": """假设你是一个小红书运营高手，我们要在小红书上发布笔记来推广一款产品。产品名：小黑子周边，产品描述：小黑子指的是蔡徐坤，因为蔡徐坤喜欢中分，穿吊带，唱鸡你太美，打篮球，练习时长两年半，所以被称为小黑子，并因此出现了许多周边。注意，示例里的产品和我们产品不一致，不要照搬示例！。我希望你能给我一个不超过20字的小红书笔记标题，标题的形式可以参考以下示例：
+#
+# 1. 🐶宠物用品一站式批发&一件代发
+#
+# 2. 源头工厂|一站式宠物用品打造🐾
+#
+# 3. 🐾一站式宠物用品批发代发，源头
+#
+# 注意，只需要给出一个标题，且标题里不要出现编号。""",
+#     "content": """假设你是一个小红书运营高手，我们要在小红书上发布笔记来推广一款产品。产品名：小黑子周边，产品描述：小黑子指的是蔡徐坤，因为蔡徐坤喜欢中分，穿吊带，唱鸡你太美，打篮球，练习时长两年半，所以被称为小黑子，并因此出现了许多周边。注意，示例里的产品和我们产品不一致，不要照搬示例！，笔记的标题为 %s。我希望你能基于此标题写一篇小红书笔记正文。正文的形式可以参考以下示例：
+#
+# 1. 🐕‍🦺 中高端原创宠物用品供应商！
+#
+# 🌎 关于海外市场
+#
+# 我们的业务在海外市场沉淀几年，现已覆盖多个国家！
+#
+# 🤝 合作共赢，始终是我们的坚持！
+#
+# 如果你是有品牌意识，想要定制款式的客户，我们支持原创设计输出！
+#
+# 🚀 最快的速度，把产品送到你手上！
+#
+# 无论是产品质量还是服务质量，我们一直在追求更高的标准，致力于越来越好地服务您！
+#
+# 🛫 一件代发，全球批发，物流可追踪！
+#
+# 无论您需要少量批发，还是一件代发，我们都能满足您的需求！
+#
+# ❤️ 多种包装方案，最适合您品牌的包装！
+#
+# 我们提供多种包装方案，选取最适合您品牌的包装！
+# #宠物用品一件代发#宠物用品工厂
+#
+# 2. 💡 又是为客户发货发到手软的一天啦，打包小哥都快顶不住了呢！我们是宠物用品源头厂家，最近后台收到不少信息，为此统一回复一下大家的疑问。🤔
+# 产品定位和优势：我们的产品定位中高端，品类丰富，款式时尚原创，不容易撞款；且一直在更新，高品质售后率低，让你放心选择。👍
+# 如何拿货：①一件代发，降低您创业的风险；②批发，起订量低，混批可，减少囤货的压力；③海外市场，帮你一件代发全球，解放你双手和烦恼；④支持定制，每个环节都可以为你安排。客户从小批量拿货到大量自信补货，我们愿意一直和你一起崛起！😍
+# 有一个靠谱稳定的进货渠道是非常省心的！如果你也有这个需求欢迎加入我们。💪
+# #宠物用品一件代发#宠物用品工厂
+#
+# 3. 🐾如今养宠物的人数越来越多了！宠物用品市场📈可谓是前途无限！🌠
+#
+# 👀越来越多的人选择线上购物，大部分是为了更优惠的价格和👌更好的产品质量。我们🏠主营各类猫粮，狗粮，罐头，冻干零食等，货源充足迅捷发货，也有许多支持一件代发的小伙伴们带来了副业收入！🤑
+#
+# 🤗售后保障服务更是让你没有后顾之忧！☘️爱宠万岁！🐩🐱
+# #宠物用品一件代发#宠物用品工厂
+#
+# 注意，只需要给出一篇正文，且正文里不要出现编号和不要重复标题。"""
+# }
 
 class GenerateType(Enum):
     Article = "article"
@@ -69,20 +119,24 @@ class Generator:
         if "generate" not in initial_state: initial_state["generate"] = {}
         initial_state["generate"][self.name()] = []
 
+        self.check_files()
+
+    def check_files(self):
         # 不存在input目录则创建
         if not os.path.exists(INPUT_ROOT):
             os.makedirs(INPUT_ROOT)
-            os.mkdir(os.path.join(INPUT_ROOT, "picture"))
-            os.mkdir(os.path.join(INPUT_ROOT, "video"))
-            if not os.path.exists(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE)):
-                with open(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE), "w", encoding="utf8") as file:
-                    pass
-            if not os.path.exists(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE)):
-                with open(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE), "w", encoding="utf8") as file:
-                    pass
-            if not os.path.exists(os.path.join(INPUT_ROOT, "title.png")):
-                with open(os.path.join(INPUT_ROOT, "title.png"), "w", encoding="utf8") as file:
-                    pass
+
+        if not os.path.exists(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE)):
+            shutil.copy(
+                os.path.join(INPUT_ROOT, "default", TITLE_PROMPT_FILE),
+                os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE)
+            )
+
+        if not os.path.exists(os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE)):
+            shutil.copy(
+                os.path.join(INPUT_ROOT, "default", CONTENT_PROMPT_FILE),
+                os.path.join(INPUT_ROOT, CONTENT_PROMPT_FILE)
+            )
 
     def name(self):
         return self.generate_type.value
@@ -182,6 +236,7 @@ class Generator:
         # 如果目录不存在，则创建
         if not os.path.exists(self.output_dir()):
             os.makedirs(self.output_dir())
+
         # 如果文件不存在，则创建
         is_new_file = not os.path.exists(file_name)
         if is_new_file: open(file_name, "w", encoding="utf8").close()

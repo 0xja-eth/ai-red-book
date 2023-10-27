@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 
 from PIL import Image
 
@@ -8,14 +9,28 @@ from src.core.generator import Generator, GenerateType, INPUT_ROOT
 
 # 基本信息
 # 图片存放路径
+TITLE_PIC_FILE = "./title.png"
+
 PICTURE_ROOT = os.path.join(INPUT_ROOT, "picture")
-TITLE_PIC_FILE = os.path.join(INPUT_ROOT, "title.png")
+# TITLE_PIC_PATH = os.path.join(INPUT_ROOT, TITLE_PIC_FILE)
 
 
 class ArticleGenerator(Generator):
 
   def __init__(self):
     super().__init__(GenerateType.Article)
+
+  def check_files(self):
+    super().check_files()
+
+    if not os.path.exists(os.path.join(INPUT_ROOT, TITLE_PIC_FILE)):
+      shutil.copy(
+        os.path.join(INPUT_ROOT, "default", TITLE_PIC_FILE),
+        os.path.join(INPUT_ROOT, TITLE_PIC_FILE)
+      )
+
+    if not os.path.exists(PICTURE_ROOT):
+      os.makedirs(PICTURE_ROOT)
 
   # region Config
 
@@ -78,7 +93,9 @@ class ArticleGenerator(Generator):
     output_image = image.generate_9_pic(files)
 
     if self.use_title() and index == 0:
-      output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+      output_image = image.add_pic_title(
+        output_image, os.path.join(INPUT_ROOT, TITLE_PIC_FILE)
+      )
 
     output_image.save(output_file)
 
@@ -104,7 +121,9 @@ class ArticleGenerator(Generator):
     output_image = image.generate_4_pic(files)
 
     if self.use_title() and index == 0:
-      output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+      output_image = image.add_pic_title(
+        output_image, os.path.join(INPUT_ROOT, TITLE_PIC_FILE)
+      )
 
     output_image.save(output_file)
 
@@ -140,7 +159,9 @@ class ArticleGenerator(Generator):
 
         output_image = Image.open(file)
         if i == 0:
-          output_image = image.add_pic_title(output_image, TITLE_PIC_FILE)
+          output_image = image.add_pic_title(
+            output_image, os.path.join(INPUT_ROOT, TITLE_PIC_FILE)
+          )
 
         output_image = output_image.convert("RGB")
         output_image.save(output_file)
