@@ -152,7 +152,8 @@ cython_debug/
 .idea
 
 # Project
-config.ini
+config*.ini
+!config.example.ini
 build
 dist
 temp

@@ -125,6 +125,8 @@ class Generator:
         # 不存在input目录则创建
         if not os.path.exists(INPUT_ROOT):
             os.makedirs(INPUT_ROOT)
+        if not os.path.exists(self.output_dir()):
+            os.makedirs(self.output_dir())
 
         if not os.path.exists(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE)):
             shutil.copy(
@@ -234,8 +236,8 @@ class Generator:
         file_name = os.path.join(self.output_dir(), "output.xlsx")
 
         # 如果目录不存在，则创建
-        if not os.path.exists(self.output_dir()):
-            os.makedirs(self.output_dir())
+        # if not os.path.exists(self.output_dir()):
+        #     os.makedirs(self.output_dir())
 
         # 如果文件不存在，则创建
         is_new_file = not os.path.exists(file_name)
