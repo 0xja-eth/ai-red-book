@@ -159,8 +159,8 @@ class XHSArticlePublisher(Publisher):
 
             if content_tag.startswith("#"):
                 topic_path = '//*[@id="topicBtn"]'
-                topic_elm = self.page.waitForXPath(topic_path)
-                topic_elm.click()
+                topic_elm = await self.page.waitForXPath(topic_path)
+                await topic_elm.click()
 
                 content_tag = content_tag[1:]
                 await content_elm.type(content_tag)
@@ -176,8 +176,8 @@ class XHSArticlePublisher(Publisher):
 
         # 发布内容
         p_path = '//*[@id="publisher-dom"]/div/div[1]/div/div[2]/div[2]/div[7]/button[1]'
-        p = self.page.waitForXPath(p_path)
-        p.click()
+        p = await self.page.waitForXPath(p_path)
+        await p.click()
 
         # TODO: [莫倪] 获取发布后的URL并返回
         return ""

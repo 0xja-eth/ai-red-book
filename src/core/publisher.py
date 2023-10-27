@@ -185,7 +185,7 @@ class Publisher:
         import tkinter
         tk = tkinter.Tk()
         width = tk.winfo_screenwidth()
-        height = tk.winfo_screenheight()
+        height = tk.winfo_screenheight() - 128
         tk.quit()
         return width, height
 
