@@ -2,6 +2,8 @@ import openai
 
 from src.config import config_loader
 
+MODEL = config_loader.get('Common', 'openai_model')
+
 openai.api_key = config_loader.get('Common', 'openai_key')
 openai.api_base = config_loader.get('Common', 'openai_base')
 
@@ -23,7 +25,7 @@ def generate_completion(prompt, **kwargs):
 
     options = {**base_options, **kwargs}
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
+        model=MODEL, # "gpt-4-32k-0613", "gpt-3.5-turbo-16k"
         messages=[{"role": "user", "content": prompt}],
         **options
     )

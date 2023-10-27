@@ -1,30 +1,44 @@
 import json
-import os
 import re
-import shutil
 import time
-from abc import abstractmethod
+from abc import  abstractmethod
+
 from dataclasses import dataclass
 
+import pyppeteer
 from dataclasses_json import dataclass_json
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+from src.core.platform import Platform
+
+import asyncio
 
 from src.config import config_loader
 from src.config.config_loader import get
-from src.core.generator import GenerateType, Generator, Generation
-from src.core.platform import Platform
+from src.core.generator import GenerateType, OUTPUT_ROOT, Generator, Generation
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 from src.utils import api_utils
 
-CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
-COOKIES_DIR = config_loader.file("cookies/")
+import shutil
+import os
+import configparser
 
+VIDEO_COUNT_FILE = "./vcount.txt"
+PUB_VIDEO_COUNT_FILE = "./vpub_count.txt"
 
-@dataclass_json(undefined="exclude")
+COOKIES_DIR = config_loader.file("./cookies/")
+
+OUTPUT_ROOT = "./voutput"
+
+video_path = "./1-vi.mp4"
+title_path = "./title_prompt.txt"
+content_path = "./content_prompt.txt"
+
+start_parm = {
+    # 关闭无头浏览器 默认是无头启动的
+    "headless": False,
+}
+
+@dataclass_json
 @dataclass
 class User:
     id: str
@@ -48,7 +62,7 @@ class User:
     #   self.platform = platform
     #   self.cookies = cookies
     #
-    #   for key in stat: setattr(self, key, stat[key])
+    #   for key in stat: self[key] = stat[key]
 
     def stat(self):
         return {
@@ -59,8 +73,7 @@ class User:
             "visitCount": self.visitCount
         }
 
-
-@dataclass_json(undefined="exclude")
+@dataclass_json
 @dataclass
 class Publication:
     id: str
@@ -80,25 +93,22 @@ class Publication:
     likeCount: int = 0
     commentCount: int = 0
 
-    visitCount: int = 0
-    likeCount: int = 0
-    commentCount: int = 0
-
-
 class Publisher:
-    driver: webdriver.Chrome
-    wait: WebDriverWait
     platform: Platform
     generate_type: GenerateType
+
     login_url: str
     user: User
+
+    page: pyppeteer.page
+    loop = asyncio.new_event_loop()
 
     def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
         self.platform = platform
         self.generate_type = generate_type
         self.login_url = login_url
-
-        self.driver = self.wait = self.user = None
+        self.user = None
+        self.page = None
 
         if "publish" not in initial_state: initial_state["publish"] = {}
         initial_state["publish"][self.name()] = 0
@@ -168,25 +178,6 @@ class Publisher:
 
     # endregion
 
-    # region Driver
-
-    def init_driver(self):
-        if not os.path.exists(CHROME_DRIVER_PATH):
-            self._download_driver()
-
-        chromedriver_path = Service(CHROME_DRIVER_PATH)
-        self.driver = webdriver.Chrome(service=chromedriver_path)
-        self.wait = WebDriverWait(self.driver, 120)
-
-    def _download_driver(self):
-        chromedriver_path = ChromeDriverManager().install()
-
-        # 将chromedriver移动到当前目录
-        new_chromedriver_path = CHROME_DRIVER_PATH
-        shutil.copy(chromedriver_path, new_chromedriver_path)
-
-    # endregion
-
     # region Login
 
     def login(self):
@@ -203,10 +194,10 @@ class Publisher:
 
     def _auto_login(self, cookies: list):
         # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
-        self._do_auto_login(cookies)
+        self.loop.run_until_complete(self._do_auto_login(cookies))
 
     @abstractmethod
-    def _do_auto_login(self, cookies: list):
+    async def _do_auto_login(self, cookies: list):
         pass
 
     @abstractmethod
@@ -214,11 +205,11 @@ class Publisher:
         pass
 
     def _make_raw_user(self, cookies):
-        return {
-            "name": self._get_user_name(),
-            "platform": self.platform.value,
-            "cookies": cookies,
-            "stat": self._get_user_stat()
+         return {
+              "name": self._get_user_name(),
+              "platform": self.platform.value,
+              "cookies": cookies,
+              "stat": self._get_user_stat()
         }
 
     @abstractmethod
@@ -230,18 +221,17 @@ class Publisher:
         pass
 
     def _record_login(self, raw_user):
-        login_res = api_utils.login(**raw_user)
-        self.user = User(**login_res["user"])
+        pass
+        # login_res = api_utils.login(**raw_user)
+        # self.user = User(**login_res["user"])
 
     # endregion
 
-    # region Publish
-
     def publish(self):
         """
-        发布一条内容
-        :return: True if need to break, False if continue next one, None if all success
-        """
+            发布一条内容
+            :return: True if need to break, False if continue next one, None if all success
+            """
         if self.pub_count() >= self.gen_count() and not self.is_looped(): return True
 
         print("Start publish %s: %d/%d" % (self.name(), self.pub_count() + 1, self.gen_count()))
@@ -250,7 +240,7 @@ class Publisher:
         output = self.generator().get_output(generate_id)
         if output is None: return False
 
-        url = self._do_publish(output)
+        url = self.loop.run_until_complete(self._do_publish(output))
 
         publication = self._upload_publication(output, url)
 
@@ -261,7 +251,7 @@ class Publisher:
         ))
 
     @abstractmethod
-    def _do_publish(self, output: Generation) -> str:
+    async def _do_publish(self, output: Generation) -> str:
         pass
 
     def _upload_publication(self, output: Generation, url: str) -> Publication:
@@ -283,10 +273,8 @@ class Publisher:
                 if flag is None: time.sleep(self.interval())
             except Exception as e:
                 print("Error publish: %s" % str(e))
-            self.driver.refresh()
 
-    def clear(self):
-        self._clear_count()
+            # self.driver.refresh()
 
     # endregion
 
@@ -294,10 +282,10 @@ class Publisher:
 
     @staticmethod
     def _get_abs_path(file_name):
-        return os.path.abspath(config_loader.file(file_name))
+        return os.path.abspath(os.path.join(OUTPUT_ROOT, file_name))
 
     @staticmethod
-    def _n2br(text):
+    def _br_ize(text):
         return text.replace("\n", "<br/>")
 
     @staticmethod
@@ -311,6 +299,7 @@ class Publisher:
                 result.append(segments[i].strip())
             if i < len(hashtags):
                 result.append(hashtags[i])
+
         return result
 
     # endregion
