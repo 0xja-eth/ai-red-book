@@ -19,6 +19,7 @@ OUTPUT_ROOT = config_loader.file("./output")
 TITLE_PROMPT_FILE = "./title_prompt.txt"
 CONTENT_PROMPT_FILE = "./content_prompt.txt"
 
+TEMPLATE_FILE = "./templates.xlsx"
 
 class GenerateType(Enum):
     Article = "article"
@@ -200,6 +201,10 @@ class Generator:
         ))
 
     def _generate_title_content(self):
+        if os.path.exists(os.path.join(INPUT_ROOT, TITLE_PROMPT_FILE)):
+            title, content = self._get_template(self.generating_count - 1)
+            if title is not None and content is not None: return title, content
+
         title_prompt, content_prompt = self.get_prompts()
         title = openai_utils.generate_completion(title_prompt)
 
@@ -207,6 +212,19 @@ class Generator:
         content = openai_utils.generate_completion(content_prompt_with_title)
 
         return title_prompt, content_prompt, title, content
+
+    def _get_template(self, index):
+        wb = openpyxl.load_workbook(TEMPLATE_FILE)
+        type = self.generate_type.value.lower()
+        rows = wb.active.rows[1:]
+        index %= len(rows)
+
+        for row in rows:
+            if row[2].value.lower() != type: continue
+            if index == 0: return row[0].value, row[1].value
+            index -= 1
+
+        return None, None
 
     @abstractmethod
     def _generate_media(self) -> list:
