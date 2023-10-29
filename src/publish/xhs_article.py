@@ -1,13 +1,17 @@
 import time
 
+import keyboard
 from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 
 from src.core.generator import GenerateType, Generation
 from src.core.platform import Platform
 from src.core.publisher import Publisher
+
+import pyautogui
 
 LOGIN_URL = "https://creator.xiaohongshu.com/login"
 
@@ -118,16 +122,54 @@ class XHSArticlePublisher(Publisher):
 
         pics = [self._get_abs_path(url) for url in output.urls]
         for pic in pics: upload_all.send_keys(pic)
-
         # upload_all.send_keys(base_photo1)
+
         # 判断图片上传成功
         while True:
             time.sleep(2)
             try:
                 uploading = 'mask.uploading'
-                self.driver.find_element(By.CLASS_NAME, uploading)
+                retry_button = self.driver.find_element(By.CLASS_NAME, uploading)
                 print("Picture is still uploading...")
+                retry_button.click()
+
             except Exception as e:
+                break
+
+        while True:
+            time.sleep(4)
+            # 获取重新上传的点击按钮元素数组
+            failed = 'btn-bottom.retry.hoverShow'
+            fail_elements = self.driver.find_elements(By.CLASS_NAME, failed)
+            print(fail_elements)
+
+            if len(fail_elements) != 0:
+                print("Picture failed to upload...Retrying...")
+                for element in fail_elements:
+                    # 找到重新上传按钮的祖先元素，其中的index确定是第几张图片上传失败
+                    parent_element = element.find_element(By.XPATH, "..")
+                    # print(parent_element.get_attribute("class"))
+                    grandparent_element = parent_element.find_element(By.XPATH, "..")
+                    grandparent_index = grandparent_element.get_attribute("index")
+                    print("上传失败的图片下标", int(grandparent_index))
+                    print(pics[int(grandparent_index)])
+                    # 重新上传对应的图片
+                    # 创建一个ActionChains对象
+                    action = ActionChains(self.driver)
+                    # 使用move_to_element()方法将鼠标悬浮在parent_element上
+                    action.move_to_element(parent_element).perform()
+
+                    element.click()
+                    time.sleep(2)
+                    failed_pic_url = pics[int(grandparent_index)]
+                    keyboard.write(failed_pic_url)
+                    time.sleep(2)
+                    # 按下Enter键来确认
+                    keyboard.press('enter')
+                    keyboard.release('enter')
+                    time.sleep(2)
+
+            else:
                 break
 
         print("Picture uploaded!")
