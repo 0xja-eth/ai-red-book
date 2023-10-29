@@ -354,7 +354,7 @@ class Generator:
         if os.path.exists(os.path.join(INPUT_ROOT, TEMPLATE_FILE)):
             title, content = self._get_template(self.generating_count - 1)
             if title is not None and content is not None:
-                return "[CUSTOM]", "[CUSTOM]", title, content
+                return "Templates.xlsx", "Templates.xlsx", title, content
 
         title_prompt, content_prompt = self.get_prompts()
         title = openai_utils.generate_completion(title_prompt)
@@ -373,7 +373,7 @@ class Generator:
         type = self.generate_type.value.lower()
 
         for row in rows:
-            if row[2].value.lower() != type: continue
+            if row[2].value is None or row[2].value.lower() != type: continue
             if index == 0: return row[0].value, row[1].value
             index -= 1
 
