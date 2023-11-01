@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 
 from src.generate.index import GENERATORS
 from src.publish.index import PUBLISHERS
@@ -28,5 +29,7 @@ if __name__ == '__main__':
 
   elif args.oper == "publish":
     publisher = PUBLISHERS["%s_%s" % (args.platform, args.generate_type)]
-    publisher.login()
-    publisher.multi_publish()
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(publisher.login())
+    loop.run_until_complete(publisher.multi_publish())
+

@@ -1,7 +1,8 @@
 import configparser
 import os
 
-WORK_DIR = "../../"
+WORK_DIR = "./"
+
 
 def file(path): return os.path.join(WORK_DIR, path)
 
@@ -30,4 +31,4 @@ def get_bool(section, key): return config.get(section, key).lower() == "true"
 
 if __name__ == '__main__':
     # Test
-    print(os.path.exists(file('/config.ini')))
+    print(os.path.exists(file('./config.ini')))

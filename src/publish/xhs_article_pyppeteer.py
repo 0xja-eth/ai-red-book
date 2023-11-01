@@ -1,3 +1,4 @@
+import os
 import time
 import asyncio
 
@@ -21,6 +22,9 @@ ELEMENT = {
 class XHSArticlePublisher(Publisher):
     def __init__(self):
         super().__init__(Platform.XHS, GenerateType.Article, LOGIN_URL)
+
+    def _get_article_abs_path(self, file_name):
+        return os.path.abspath(file_name)
 
     async def _do_login(self) -> list:
         # 打开网页
@@ -109,9 +113,8 @@ class XHSArticlePublisher(Publisher):
         await self.page.waitFor(3000)
 
         upload_i_path0 = '//*[@id="publisher-dom"]/div/div[1]/div/div[1]/div[1]/div[2]'
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, upload_i_path0)))
-        upload_i = self.page.waitForXPath(upload_i_path0)
-        upload_i.click()
+        upload_i = await self.page.waitForXPath(upload_i_path0)
+        await upload_i.click()
         await self.page.waitFor(3000)
 
         # upload_article = await self.page.waitForSelector('#web > div > div.upload-container > div.header > div.tab.active')
@@ -120,6 +123,7 @@ class XHSArticlePublisher(Publisher):
         # 输入按钮
         upload_all = await self.page.querySelector('input[type="file"]')
 
+        # pics = [self._get_article_abs_path(url) for url in output.urls]
         pics = [self._get_abs_path(url) for url in output.urls]
         for pic in pics: await upload_all.uploadFile(pic)
 

@@ -171,5 +171,5 @@ class ArticleGenerator(Generator):
 
 generator = ArticleGenerator()
 
-# if __name__ == '__main__':
-#     generator.multi_generate()
+if __name__ == '__main__':
+    generator.multi_generate()
