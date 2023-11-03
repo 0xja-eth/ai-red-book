@@ -96,10 +96,6 @@ class Publication:
     likeCount: int = 0
     commentCount: int = 0
 
-    visitCount: int = 0
-    likeCount: int = 0
-    commentCount: int = 0
-
 
 class Publisher:
     platform: Platform
@@ -192,7 +188,7 @@ class Publisher:
         import tkinter
         tk = tkinter.Tk()
         width = tk.winfo_screenwidth()
-        height = tk.winfo_screenheight()
+        height = tk.winfo_screenheight() - 128
         tk.quit()
         return width, height
 
@@ -216,7 +212,6 @@ class Publisher:
             if len(cookies) > 0:
                 self._save_cookies(cookies)
 
-        # await self.screen_resize()
         raw_user = self._make_raw_user(cookies)
         self._record_login(raw_user)
 
@@ -298,6 +293,8 @@ class Publisher:
         }))
 
     async def multi_publish(self):
+        await self.screen_resize()
+
         while True:
             try:
                 flag = await self.publish()
@@ -307,6 +304,8 @@ class Publisher:
             except Exception as e:
                 print("Error publish: %s" % str(e))
 
+            # refresh current page in pyppeteer
+            await self.page.reload()
             # self.driver.refresh()
 
     # endregion

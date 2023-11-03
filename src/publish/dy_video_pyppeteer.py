@@ -42,7 +42,6 @@ class DYVideoPublisher(Publisher):
     async def _do_auto_login(self, cookies: list):
         browser = await launch(**start_parm)
         self.page = await browser.newPage()
-        await self.screen_resize()
 
         for cookie in cookies:
             await self.page.setCookie(cookie)
