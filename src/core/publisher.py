@@ -80,10 +80,6 @@ class Publication:
     likeCount: int = 0
     commentCount: int = 0
 
-    visitCount: int = 0
-    likeCount: int = 0
-    commentCount: int = 0
-
 
 class Publisher:
     driver: webdriver.Chrome
