@@ -105,14 +105,53 @@ class XHSVideoPublisher(Publisher):
         video_url = self._get_abs_path(output.urls[0])
         await upload_video.uploadFile(video_url)
 
+        # title_text, content_text = output.title, output.content
+        #
+        # #上传标题和文本
+        # upload_title = await self.page.waitForSelector(
+        #     '#publish-container > div > div:nth-child(3) > div.content > div.c-input.titleInput > input')
+        # await upload_title.type(title_text)
+        # upload_content = await self.page.waitForSelector('#post-textarea')
+        # await upload_content.type(content_text)
+
         title_text, content_text = output.title, output.content
 
-        #上传标题和文本
-        upload_title = await self.page.waitForSelector(
-            '#publish-container > div > div:nth-child(3) > div.content > div.c-input.titleInput > input')
-        await upload_title.type(title_text)
-        upload_content = await self.page.waitForSelector('#post-textarea')
-        await upload_content.type(content_text)
+        # content_tags = self._extract_content_tags(self._n2br(content_text))
+        content_tags = self._extract_content_tags(content_text)
+
+        JS_CODE_ADD_TEXT = """
+                  console.log("arguments", arguments)
+                  var elm = arguments[0], txt = arguments[1], key = arguments[2] || "value";
+                  elm[key] += txt;
+                  elm.dispatchEvent(new Event('change'));
+                """
+
+        # 填写标题
+        title_path = '//*[@id="publish-container"]/div/div[3]/div[2]/div[3]/input'
+        title_elm = await self.page.waitForXPath(title_path)
+        await title_elm.type(title_text)
+        # self.driver.execute_script(JS_CODE_ADD_TEXT, title_elm, title_text)
+
+        for content_tag in content_tags:
+            content_path = '//*[@id="post-textarea"]'
+            content_elm = await self.page.waitForXPath(content_path)
+
+            if content_tag.startswith("#"):
+                topic_path = '//*[@id="topicBtn"]'
+                topic_elm = await self.page.waitForXPath(topic_path)
+                await topic_elm.click()
+
+                content_tag = content_tag[1:]
+                await content_elm.type(content_tag)
+                await self.page.waitFor(3000)
+                await content_elm.type('\n')
+
+            else:
+                # 填写内容信息
+                # self.driver.execute_script(JS_CODE_ADD_TEXT, content_elm, content_tag, "innerHTML")
+                await content_elm.type(content_tag)
+
+        await self.page.waitFor(3000)
 
         # 等待确保发布按钮可以点击，暂时还没找到判断按钮是否可以点击的API
 

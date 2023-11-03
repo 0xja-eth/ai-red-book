@@ -271,12 +271,16 @@ class Publisher:
 
         url = await self._do_publish(output)
 
-        publication = self._upload_publication(output, url)
+        # TODO:获取用户数据
+        # publication = self._upload_publication(output, url)
 
         self._add_count()
 
-        print("End publish %s: %d/%d -> %s" % (
-            self.name(), self.pub_count(), self.gen_count(), publication
+        # print("End publish %s: %d/%d -> %s" % (
+        #     self.name(), self.pub_count(), self.gen_count(), publication
+        # ))
+        print("End publish %s: %d/%d" % (
+            self.name(), self.pub_count(), self.gen_count()
         ))
 
     @abstractmethod
@@ -315,7 +319,7 @@ class Publisher:
 
     @staticmethod
     def _n2br(text):
-        return text.replace("\n", "<br/>")
+        return text.replace('\n', '<br/>')
 
     @staticmethod
     def _extract_content_tags(text):
