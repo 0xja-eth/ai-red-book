@@ -2,7 +2,7 @@
 from src.core.generator import GenerateType
 from src.core.platform import Platform
 
-from src.publish import xhs_video_pyppeteer, xhs_article_pyppeteer, dy_video_pyppeteer, wx_video
+from src.publish import xhs_video, xhs_article, dy_video, wx_video
 
 PUBLISHERS = {
   ("%s_%s" % (Platform.XHS.value, GenerateType.Article.value)): xhs_article_pyppeteer.publisher,

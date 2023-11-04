@@ -1,30 +1,34 @@
 import json
-import os
 import re
-import shutil
 import time
 from abc import abstractmethod
+
 from dataclasses import dataclass
 
+import pyppeteer
 from dataclasses_json import dataclass_json
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
+from src.core.platform import Platform
+
+import asyncio
 
 from src.config import config_loader
 from src.config.config_loader import get
 from src.core.generator import GenerateType, Generator, Generation
-from src.core.platform import Platform
 from src.core.state_manager import initial_state, get_state, set_state
 from src.generate.index import GENERATORS
 from src.utils import api_utils
 
-CHROME_DRIVER_PATH = config_loader.file("./chromedriver.exe")
+import os
+
 COOKIES_DIR = config_loader.file("cookies/")
 
+start_parm = {
+    # 关闭无头浏览器 默认是无头启动的
+    "headless": False
+}
 
-@dataclass_json(undefined="exclude")
+
+@dataclass_json
 @dataclass
 class User:
     id: str
@@ -48,7 +52,7 @@ class User:
     #   self.platform = platform
     #   self.cookies = cookies
     #
-    #   for key in stat: setattr(self, key, stat[key])
+    #   for key in stat: self[key] = stat[key]
 
     def stat(self):
         return {
@@ -60,7 +64,7 @@ class User:
         }
 
 
-@dataclass_json(undefined="exclude")
+@dataclass_json
 @dataclass
 class Publication:
     id: str
@@ -80,20 +84,23 @@ class Publication:
     likeCount: int = 0
     commentCount: int = 0
 
+
 class Publisher:
-    driver: webdriver.Chrome
-    wait: WebDriverWait
     platform: Platform
     generate_type: GenerateType
+
     login_url: str
     user: User
+
+    page: pyppeteer.page
+    loop = asyncio.new_event_loop()
 
     def __init__(self, platform: Platform, generate_type: GenerateType, login_url: str):
         self.platform = platform
         self.generate_type = generate_type
         self.login_url = login_url
-
-        self.driver = self.wait = self.user = None
+        self.user = None
+        self.page = None
 
         if "publish" not in initial_state: initial_state["publish"] = {}
         initial_state["publish"][self.name()] = 0
@@ -163,49 +170,50 @@ class Publisher:
 
     # endregion
 
-    # region Driver
+    # region resize
+    def screen_size(self):
+        # 使用tkinter获取屏幕大小
+        import tkinter
+        tk = tkinter.Tk()
+        width = tk.winfo_screenwidth()
+        height = tk.winfo_screenheight() - 128
+        tk.quit()
+        return width, height
 
-    def init_driver(self):
-        if not os.path.exists(CHROME_DRIVER_PATH):
-            self._download_driver()
-
-        chromedriver_path = Service(CHROME_DRIVER_PATH)
-        self.driver = webdriver.Chrome(service=chromedriver_path)
-        self.wait = WebDriverWait(self.driver, 120)
-
-    def _download_driver(self):
-        chromedriver_path = ChromeDriverManager().install()
-
-        # 将chromedriver移动到当前目录
-        new_chromedriver_path = CHROME_DRIVER_PATH
-        shutil.copy(chromedriver_path, new_chromedriver_path)
+    async def screen_resize(self):
+        width, height = self.screen_size()
+        await self.page.setViewport({
+            "width": width,
+            "height": height
+        })
 
     # endregion
 
     # region Login
 
-    def login(self):
+    async def login(self):
         cookies = self.get_cookies()
         if len(cookies) > 0:
-            self._auto_login(cookies)
+            await self._auto_login(cookies)
         else:
-            cookies = self._do_login()
+            cookies = await self._do_login()
             if len(cookies) > 0:
                 self._save_cookies(cookies)
 
         raw_user = self._make_raw_user(cookies)
         self._record_login(raw_user)
 
-    def _auto_login(self, cookies: list):
+    async def _auto_login(self, cookies: list):
         # 自动登陆，如果需要子类实现，写一个 _do_auto_login 函数
-        self._do_auto_login(cookies)
+        # self.loop.run_until_complete(self._do_auto_login(cookies))
+        await self._do_auto_login(cookies)
 
     @abstractmethod
-    def _do_auto_login(self, cookies: list):
+    async def _do_auto_login(self, cookies: list):
         pass
 
     @abstractmethod
-    def _do_login(self) -> list:
+    async def _do_login(self) -> list:
         pass
 
     def _make_raw_user(self, cookies):
@@ -225,18 +233,17 @@ class Publisher:
         pass
 
     def _record_login(self, raw_user):
-        login_res = api_utils.login(**raw_user)
-        self.user = User(**login_res["user"])
+        pass
+        # login_res = api_utils.login(**raw_user)
+        # self.user = User(**login_res["user"])
 
     # endregion
 
-    # region Publish
-
-    def publish(self):
+    async def publish(self):
         """
-        发布一条内容
-        :return: True if need to break, False if continue next one, None if all success
-        """
+            发布一条内容
+            :return: True if need to break, False if continue next one, None if all success
+            """
         if self.pub_count() >= self.gen_count() and not self.is_looped(): return True
 
         print("Start publish %s: %d/%d" % (self.name(), self.pub_count() + 1, self.gen_count()))
@@ -245,18 +252,22 @@ class Publisher:
         output = self.generator().get_output(generate_id)
         if output is None: return False
 
-        url = self._do_publish(output)
+        url = await self._do_publish(output)
 
-        publication = self._upload_publication(output, url)
+        # TODO:获取用户数据
+        # publication = self._upload_publication(output, url)
 
         self._add_count()
 
-        print("End publish %s: %d/%d -> %s" % (
-            self.name(), self.pub_count(), self.gen_count(), publication
+        # print("End publish %s: %d/%d -> %s" % (
+        #     self.name(), self.pub_count(), self.gen_count(), publication
+        # ))
+        print("End publish %s: %d/%d" % (
+            self.name(), self.pub_count(), self.gen_count()
         ))
 
     @abstractmethod
-    def _do_publish(self, output: Generation) -> str:
+    async def _do_publish(self, output: Generation) -> str:
         pass
 
     def _upload_publication(self, output: Generation, url: str) -> Publication:
@@ -269,19 +280,21 @@ class Publisher:
             "url": url
         }))
 
-    def multi_publish(self):
+    async def multi_publish(self):
+        await self.screen_resize()
+
         while True:
             try:
-                flag = self.publish()
+                flag = await self.publish()
                 if flag is True: break
                 if flag is False: continue
                 if flag is None: time.sleep(self.interval())
             except Exception as e:
                 print("Error publish: %s" % str(e))
-            self.driver.refresh()
 
-    def clear(self):
-        self._clear_count()
+            # refresh current page in pyppeteer
+            await self.page.reload()
+            # self.driver.refresh()
 
     # endregion
 
@@ -293,7 +306,7 @@ class Publisher:
 
     @staticmethod
     def _n2br(text):
-        return text.replace("\n", "<br/>")
+        return text.replace('\n', '<br/>')
 
     @staticmethod
     def _extract_content_tags(text):
@@ -306,6 +319,5 @@ class Publisher:
                 result.append(segments[i].strip())
             if i < len(hashtags):
                 result.append(hashtags[i])
-        return result
 
-    # endregion
+        return result
